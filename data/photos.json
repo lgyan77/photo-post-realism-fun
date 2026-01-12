@@ -102,6 +102,37 @@
           "date": "2026-01-02T12:58:26.000Z"
         }
       ]
+    },
+    {
+      "id": "st-anton-tyrol-austria",
+      "title": "St Anton Tyrol Austria",
+      "description": "Shades of white on the slopes of Tyrol.",
+      "photos": [
+        {
+          "id": "st-anton-tyrol-austria-1",
+          "url": "images/web/st-anton-tyrol-austria/1.2025-12-17 11.24.12-1-2.jpg",
+          "thumb": "images/thumbs/st-anton-tyrol-austria/1.2025-12-17 11.24.12-1-2.jpg",
+          "width": 2560,
+          "height": 1485,
+          "date": "2025-12-28T12:14:10.000Z"
+        },
+        {
+          "id": "st-anton-tyrol-austria-2",
+          "url": "images/web/st-anton-tyrol-austria/2.2025-12-18 08.20.11-5-15-2.jpg",
+          "thumb": "images/thumbs/st-anton-tyrol-austria/2.2025-12-18 08.20.11-5-15-2.jpg",
+          "width": 2173,
+          "height": 1244,
+          "date": "2025-12-28T13:02:48.000Z"
+        },
+        {
+          "id": "st-anton-tyrol-austria-3",
+          "url": "images/web/st-anton-tyrol-austria/3.2025-12-19 13.53.57-2-2.jpg",
+          "thumb": "images/thumbs/st-anton-tyrol-austria/3.2025-12-19 13.53.57-2-2.jpg",
+          "width": 2560,
+          "height": 1789,
+          "date": "2025-12-28T11:13:10.000Z"
+        }
+      ]
     }
   ]
 }
