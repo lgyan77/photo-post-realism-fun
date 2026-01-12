@@ -336,7 +336,7 @@ function updateSocialPreviewImage(sections) {
   let html = fs.readFileSync(indexPath, 'utf8');
   
   // Build the full URL (you can change the domain when deploying)
-  const imageUrl = `https://lgyan77.github.io/photo-post-realism-fun${firstPhoto.url}`;
+  const imageUrl = `https://lgyan77.github.io/photo-post-realism-fun/${firstPhoto.url}`;
   
   // Update or add og:image meta tag
   const ogImageRegex = /<meta\s+property="og:image"\s+content="[^"]*"\s*\/?>/;
