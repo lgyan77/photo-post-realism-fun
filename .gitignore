@@ -1,0 +1,22 @@
+# Node modules
+node_modules/
+
+# Large original files - keep locally only
+# The build script generates optimized web versions for deployment
+images/originals/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor files
+.vscode/
+.idea/
+*.iml
+*.swp
+*.swo
+*~
+
+# Temporary files
+*.log
+*.tmp
