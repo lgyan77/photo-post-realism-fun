@@ -270,6 +270,56 @@ async function build() {
   console.log(`\n📊 Summary:`);
   console.log(`   Sections: ${sections.length}`);
   console.log(`   Photos: ${totalPhotos}`);
+  
+  // Update social preview image in index.html
+  updateSocialPreviewImage(sections);
+}
+
+// Update the Open Graph image meta tag in index.html
+function updateSocialPreviewImage(sections) {
+  const indexPath = './index.html';
+  
+  if (!fs.existsSync(indexPath)) {
+    console.warn('\n⚠️  index.html not found, skipping meta tag update');
+    return;
+  }
+  
+  // Get first photo from first section
+  const firstPhoto = sections[0]?.photos[0];
+  if (!firstPhoto) {
+    console.warn('\n⚠️  No photos found, skipping meta tag update');
+    return;
+  }
+  
+  // Read index.html
+  let html = fs.readFileSync(indexPath, 'utf8');
+  
+  // Build the full URL (you can change the domain when deploying)
+  const imageUrl = `https://lgyan77.github.io/photo-post-realism-fun${firstPhoto.url}`;
+  
+  // Update or add og:image meta tag
+  const ogImageRegex = /<meta\s+property="og:image"\s+content="[^"]*"\s*\/?>/;
+  const newMetaTag = `<meta property="og:image" content="${imageUrl}">`;
+  
+  if (ogImageRegex.test(html)) {
+    // Update existing tag
+    html = html.replace(ogImageRegex, newMetaTag);
+    console.log(`\n🖼️  Updated og:image meta tag to: ${firstPhoto.url}`);
+  } else {
+    // Add after og:description
+    const ogDescRegex = /(<meta\s+property="og:description"[^>]*>)/;
+    if (ogDescRegex.test(html)) {
+      html = html.replace(ogDescRegex, `$1\n    ${newMetaTag}`);
+      console.log(`\n🖼️  Added og:image meta tag: ${firstPhoto.url}`);
+    } else {
+      console.warn('\n⚠️  Could not find og:description tag, skipping og:image update');
+      return;
+    }
+  }
+  
+  // Write updated HTML
+  fs.writeFileSync(indexPath, html, 'utf8');
+  console.log(`✓ index.html updated with social preview image`);
 }
 
 // Run build

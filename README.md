@@ -1,5 +1,7 @@
 # Photo Post-Realism Is Fun
 
+Portfolio by **Leonid Yanovich**
+
 A modern, minimalist photo gallery with automated image processing and metadata extraction. Built with vanilla JavaScript and designed for photographers who want a beautiful portfolio without the hassle of manual data entry.
 
 ## ✨ Features
@@ -52,6 +54,7 @@ See [QUICK-START.md](QUICK-START.md) for step-by-step instructions.
 - ✅ **EXIF metadata** extracted (camera, lens, settings, date)
 - ✅ **Image dimensions** calculated
 - ✅ **Complete data file** created (`data/photos.json`)
+- ✅ **Social preview image** updated in `index.html` (uses first photo from first section)
 
 ### What You See:
 - Beautiful responsive gallery

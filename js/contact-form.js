@@ -150,13 +150,19 @@ function updateSubmitButton() {
   if (!submitBtn) return;
 
   const isValid = isFormValid();
-  submitBtn.disabled = formState.isSubmitting || !isValid;
   
-  if (formState.isSubmitting || !isValid) {
-    submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
-  } else {
-    submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
-  }
+  // TEMPORARY: Disabled during development
+  // Uncomment to re-enable the submit send message button:
+  submitBtn.disabled = true;
+  submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
+  
+  // Original code (commented out during development):
+  // submitBtn.disabled = formState.isSubmitting || !isValid;
+  // if (formState.isSubmitting || !isValid) {
+  //   submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
+  // } else {
+  //   submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+  // }
 }
 
 // Show success message
@@ -193,6 +199,14 @@ function showSuccessMessage() {
 // Handle form submission
 async function handleFormSubmit(e) {
   e.preventDefault();
+  
+  // TEMPORARY: Block submission during development
+  // Uncomment to re-enable the submit send message button:
+  // console.log('Form submission blocked: Backend in development');
+  return;
+  
+  // Original code below (commented out during development):
+  /*
   formState.submitError = '';
 
   // Honeypot check - if filled, it's likely spam
@@ -260,6 +274,7 @@ async function handleFormSubmit(e) {
     submitBtn.innerHTML = originalHTML;
     updateSubmitButton();
   }
+  */
 }
 
 // Handle input change
@@ -420,6 +435,12 @@ function createContactForm() {
           </svg>
           Send Message
         </button>
+        
+        <!-- TEMPORARY: Remove this notice to re-enable the submit send message button -->
+        <!-- Development notice -->
+        <p class="mt-4 text-sm text-red-600 text-center font-light">
+          ⚠️ Contact form is currently in development. Message sending is temporarily disabled.
+        </p>
       </form>
     </div>
   `;

@@ -273,7 +273,7 @@ function createFooter() {
   
   footer.innerHTML = `
     <div class="flex items-center justify-between text-xs text-gray-400">
-      <span>© ${new Date().getFullYear()} Photo Post-Realism Is Fun. All rights reserved.</span>
+      <span>© ${new Date().getFullYear()} Leonid Yanovich. All rights reserved.</span>
       <a 
         href="contact.html"
         class="hover:text-black transition-colors duration-300"

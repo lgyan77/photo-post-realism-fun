@@ -46,6 +46,7 @@ npm run serve    # View at http://localhost:8000
 ✅ **EXIF Metadata** - Camera, lens, settings extracted  
 ✅ **Dimensions** - Width × height calculated  
 ✅ **JSON File** - All data compiled into `data/photos.json`
+✅ **Social Preview** - First photo automatically set as og:image in `index.html`
 
 No manual data entry needed! Your originals stay private, only optimized versions are deployed.
 
