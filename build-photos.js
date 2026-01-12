@@ -186,8 +186,8 @@ async function processImage(imagePath, section, index) {
   // Build photo data object - only include fields that exist
   const photoData = {
     id: `${section.id}-${index + 1}`,
-    url: `/images/web/${section.folder}/${filename}`,
-    thumb: `/images/thumbs/${section.folder}/${filename}`,
+    url: `images/web/${section.folder}/${filename}`,
+    thumb: `images/thumbs/${section.folder}/${filename}`,
     width: webMetadata.width,
     height: webMetadata.height,
     date: getPhotoDate(exif, fileStats)
