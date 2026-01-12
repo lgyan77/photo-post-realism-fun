@@ -2,6 +2,36 @@
 // LAYOUT - Enhanced Navigation & Header from base44
 // ===========================
 
+// Detect if device should use mobile layout
+// Phones: always mobile (even in landscape)
+// Tablets: use breakpoint (desktop when wide enough)
+// Desktops: always desktop
+function shouldUseMobileLayout() {
+  const hasTouch = (
+    'ontouchstart' in window ||
+    navigator.maxTouchPoints > 0 ||
+    navigator.msMaxTouchPoints > 0
+  );
+  
+  if (!hasTouch) {
+    // Desktop/laptop - use width-based breakpoint
+    return window.innerWidth < 768;
+  }
+  
+  // Touch device - distinguish phone from tablet
+  // If EITHER dimension is < 700px, it's a phone (catches both orientations)
+  const PHONE_THRESHOLD = 700;
+  const isPhone = window.innerWidth < PHONE_THRESHOLD || window.innerHeight < PHONE_THRESHOLD;
+  
+  if (isPhone) {
+    // Phones always use mobile layout (even in landscape)
+    return true;
+  }
+  
+  // Tablet - use width-based breakpoint (allows desktop layout in landscape)
+  return window.innerWidth < 1024;
+}
+
 let layoutState = {
   scrolled: false,
   sortOrder: 'newest',
@@ -9,8 +39,32 @@ let layoutState = {
   dropdownOpen: false,
   mobileSectionsOpen: false,
   lastScrollY: 0,
-  footerTimeout: null
+  footerTimeout: null,
+  isMobile: shouldUseMobileLayout()
 };
+
+// Apply mobile layout overrides for small touch devices (phones)
+function applyMobileOverrides() {
+  if (!layoutState.isMobile) return;
+  
+  // Add custom CSS to force mobile layout on phones in landscape
+  const style = document.createElement('style');
+  style.textContent = `
+    /* Force mobile layout on small touch devices (phones) even in landscape */
+    @media (hover: none) and (pointer: coarse) and (max-height: 1023px) {
+      .md\\:hidden.mobile-sections-bar,
+      .md\\:hidden.mobile-sections-content {
+        display: block !important;
+      }
+      
+      .hidden.md\\:flex.header-controls,
+      .hidden.md\\:block > nav {
+        display: none !important;
+      }
+    }
+  `;
+  document.head.appendChild(style);
+}
 
 // Create main header
 function createHeader() {
@@ -307,10 +361,8 @@ function updateFooterVisibility() {
   const footer = document.getElementById('main-footer');
   if (!footer) return;
   
-  // Only apply auto-hide on mobile (width < 768px, which is md breakpoint)
-  const isMobile = window.innerWidth < 768;
-  
-  if (!isMobile) {
+  // Only apply auto-hide on mobile (touch devices)
+  if (!layoutState.isMobile) {
     // On desktop, always show footer
     footer.style.opacity = '1';
     if (layoutState.footerTimeout) {
@@ -566,6 +618,9 @@ function toggleDropdown(open) {
 
 // Initialize layout
 function initLayout() {
+  // Apply mobile overrides for touch devices
+  applyMobileOverrides();
+  
   // Don't add layout to contact page
   if (window.location.pathname.includes('contact.html')) {
     return;
@@ -603,6 +658,11 @@ function initLayout() {
   window.addEventListener('scroll', () => {
     updateHeaderScroll();
     updateFooterVisibility();
+  });
+  
+  // Update mobile state on resize/orientation change
+  window.addEventListener('resize', () => {
+    layoutState.isMobile = shouldUseMobileLayout();
   });
 
   // Setup scroll buttons
