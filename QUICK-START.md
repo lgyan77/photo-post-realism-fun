@@ -41,6 +41,7 @@ npm run serve    # View at http://localhost:8000
 
 ## What Gets Automated ✨
 
+✅ **File Renaming** - Leading underscores removed (GitHub Pages fix)
 ✅ **Thumbnails** - Generated at 400px wide (grid view)
 ✅ **Web Versions** - Generated at 2560px max (lightbox view)  
 ✅ **EXIF Metadata** - Camera, lens, settings extracted  
@@ -48,7 +49,7 @@ npm run serve    # View at http://localhost:8000
 ✅ **JSON File** - All data compiled into `data/photos.json`
 ✅ **Social Preview** - First photo automatically set as og:image in `index.html`
 
-No manual data entry needed! Your originals stay private, only optimized versions are deployed.
+No manual data entry needed! Just drop files with any name (even with underscores), and everything is handled automatically. Your originals stay private, only optimized versions are deployed.
 
 ---
 

@@ -22,6 +22,38 @@ function ensureDir(dirPath) {
   }
 }
 
+// Rename files with leading underscores (GitHub Pages compatibility)
+function renameUnderscoreFiles(dirPath) {
+  if (!fs.existsSync(dirPath)) return 0;
+  
+  let renamedCount = 0;
+  const items = fs.readdirSync(dirPath);
+  
+  items.forEach(item => {
+    const fullPath = path.join(dirPath, item);
+    const stat = fs.statSync(fullPath);
+    
+    if (stat.isDirectory()) {
+      // Recursively process subdirectories
+      renamedCount += renameUnderscoreFiles(fullPath);
+    } else if (stat.isFile() && item.startsWith('_')) {
+      // Remove leading underscore(s)
+      const newName = item.replace(/^_+/, '');
+      const newPath = path.join(dirPath, newName);
+      
+      if (fs.existsSync(newPath)) {
+        console.warn(`  ⚠️  Skipped: ${item} (target already exists: ${newName})`);
+      } else {
+        fs.renameSync(fullPath, newPath);
+        console.log(`  ✓ Renamed: ${item} → ${newName}`);
+        renamedCount++;
+      }
+    }
+  });
+  
+  return renamedCount;
+}
+
 // Extract EXIF data from image buffer
 function extractExif(buffer) {
   try {
@@ -241,6 +273,15 @@ async function build() {
   
   // Ensure output directory exists
   ensureDir(path.dirname(CONFIG.outputFile));
+  
+  // Rename files with leading underscores (for GitHub Pages compatibility)
+  console.log('🔄 Checking for files with leading underscores...');
+  const renamedCount = renameUnderscoreFiles(CONFIG.originalsDir);
+  if (renamedCount > 0) {
+    console.log(`✓ Renamed ${renamedCount} file(s) to remove leading underscores\n`);
+  } else {
+    console.log('✓ No files needed renaming\n');
+  }
   
   // Read content configuration
   let content;

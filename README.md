@@ -49,6 +49,7 @@ See [QUICK-START.md](QUICK-START.md) for step-by-step instructions.
 3. Run `npm run build`
 
 ### What Happens Automatically:
+- ✅ **Files renamed** if they start with underscore (GitHub Pages compatibility)
 - ✅ **Thumbnails** generated (400px wide for grid view)
 - ✅ **Web versions** generated (2560px max for lightbox - protects originals!)
 - ✅ **EXIF metadata** extracted (camera, lens, settings, date)
