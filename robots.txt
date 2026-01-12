@@ -1,0 +1,14 @@
+# Robots.txt for Photo Post-Realism Is Fun
+# UPDATE the Sitemap URL before launch
+
+User-agent: *
+Allow: /
+
+# Disallow admin/build files
+Disallow: /node_modules/
+Disallow: /build-photos.js
+Disallow: /package.json
+Disallow: /content.json
+
+# Sitemap location (UPDATE with your actual domain)
+# Sitemap: https://yourdomain.com/sitemap.xml
