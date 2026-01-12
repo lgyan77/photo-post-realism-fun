@@ -17,7 +17,7 @@ let state = {
 // Load photo data from JSON
 async function loadPhotoData() {
   try {
-    const response = await fetch('/data/photos.json');
+    const response = await fetch('data/photos.json');
     if (!response.ok) {
       console.warn('photos.json not found, using demo data');
       return null;
