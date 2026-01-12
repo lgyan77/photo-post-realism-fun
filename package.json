@@ -1,0 +1,16 @@
+{
+  "name": "photo-post-realism-fun",
+  "version": "1.0.0",
+  "description": "Photo gallery with automated image processing and metadata extraction",
+  "scripts": {
+    "build": "node build-photos.js",
+    "serve": "python3 -m http.server 8000"
+  },
+  "dependencies": {
+    "sharp": "^0.33.1",
+    "exif-parser": "^0.1.12"
+  },
+  "devDependencies": {},
+  "author": "",
+  "license": "MIT"
+}
