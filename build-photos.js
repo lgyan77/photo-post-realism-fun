@@ -335,8 +335,10 @@ function updateSocialPreviewImage(sections) {
   // Read index.html
   let html = fs.readFileSync(indexPath, 'utf8');
   
-  // Build the full URL (you can change the domain when deploying)
-  const imageUrl = `https://lgyan77.github.io/photo-post-realism-fun/${firstPhoto.url}`;
+  // Build the full URL using thumbnail for faster social preview loading
+  // Replace 'web' with 'thumbs' in the URL
+  const thumbUrl = firstPhoto.url.replace('/web/', '/thumbs/');
+  const imageUrl = `https://lgyan77.github.io/photo-post-realism-fun/${thumbUrl}`;
   
   // Update og:image meta tag
   const ogImageRegex = /<meta\s+property="og:image"\s+content="[^"]*"\s*\/?>/;
