@@ -889,6 +889,11 @@ function initLayout() {
 
   // Setup scroll buttons
   document.getElementById('scroll-to-top-logo').addEventListener('click', () => {
+    // Clear hash from URL (e.g., example.com/#section → example.com/)
+    if (window.location.hash) {
+      history.replaceState(null, '', window.location.pathname + window.location.search);
+    }
+    // Scroll to top
     window.scrollTo({ top: 0, behavior: 'smooth' });
   });
 
