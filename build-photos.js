@@ -366,6 +366,13 @@ function updateSocialPreviewImage(sections) {
     html = html.replace(ogImageHeightRegex, newOgImageHeightTag);
   }
   
+  // Update twitter:image meta tag
+  const twitterImageRegex = /<meta\s+name="twitter:image"\s+content="[^"]*"\s*\/?>/;
+  const newTwitterImageTag = `<meta name="twitter:image" content="${imageUrl}">`;
+  if (twitterImageRegex.test(html)) {
+    html = html.replace(twitterImageRegex, newTwitterImageTag);
+  }
+  
   console.log(`\n🖼️  Updated social preview meta tags to: ${firstPhoto.url} (${firstPhoto.width}x${firstPhoto.height})`);
   
   // Write updated HTML
