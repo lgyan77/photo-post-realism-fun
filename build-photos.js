@@ -338,25 +338,35 @@ function updateSocialPreviewImage(sections) {
   // Build the full URL (you can change the domain when deploying)
   const imageUrl = `https://lgyan77.github.io/photo-post-realism-fun/${firstPhoto.url}`;
   
-  // Update or add og:image meta tag
+  // Update og:image meta tag
   const ogImageRegex = /<meta\s+property="og:image"\s+content="[^"]*"\s*\/?>/;
-  const newMetaTag = `<meta property="og:image" content="${imageUrl}">`;
-  
+  const newOgImageTag = `<meta property="og:image" content="${imageUrl}">`;
   if (ogImageRegex.test(html)) {
-    // Update existing tag
-    html = html.replace(ogImageRegex, newMetaTag);
-    console.log(`\n🖼️  Updated og:image meta tag to: ${firstPhoto.url}`);
-  } else {
-    // Add after og:description
-    const ogDescRegex = /(<meta\s+property="og:description"[^>]*>)/;
-    if (ogDescRegex.test(html)) {
-      html = html.replace(ogDescRegex, `$1\n    ${newMetaTag}`);
-      console.log(`\n🖼️  Added og:image meta tag: ${firstPhoto.url}`);
-    } else {
-      console.warn('\n⚠️  Could not find og:description tag, skipping og:image update');
-      return;
-    }
+    html = html.replace(ogImageRegex, newOgImageTag);
   }
+  
+  // Update og:image:secure_url meta tag
+  const ogImageSecureRegex = /<meta\s+property="og:image:secure_url"\s+content="[^"]*"\s*\/?>/;
+  const newOgImageSecureTag = `<meta property="og:image:secure_url" content="${imageUrl}">`;
+  if (ogImageSecureRegex.test(html)) {
+    html = html.replace(ogImageSecureRegex, newOgImageSecureTag);
+  }
+  
+  // Update og:image:width meta tag
+  const ogImageWidthRegex = /<meta\s+property="og:image:width"\s+content="[^"]*"\s*\/?>/;
+  const newOgImageWidthTag = `<meta property="og:image:width" content="${firstPhoto.width}">`;
+  if (ogImageWidthRegex.test(html)) {
+    html = html.replace(ogImageWidthRegex, newOgImageWidthTag);
+  }
+  
+  // Update og:image:height meta tag
+  const ogImageHeightRegex = /<meta\s+property="og:image:height"\s+content="[^"]*"\s*\/?>/;
+  const newOgImageHeightTag = `<meta property="og:image:height" content="${firstPhoto.height}">`;
+  if (ogImageHeightRegex.test(html)) {
+    html = html.replace(ogImageHeightRegex, newOgImageHeightTag);
+  }
+  
+  console.log(`\n🖼️  Updated social preview meta tags to: ${firstPhoto.url} (${firstPhoto.width}x${firstPhoto.height})`);
   
   // Write updated HTML
   fs.writeFileSync(indexPath, html, 'utf8');
