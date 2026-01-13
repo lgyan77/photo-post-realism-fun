@@ -72,6 +72,22 @@ let layoutState = {
 function applyDeviceStyles() {
   const style = document.createElement('style');
   style.textContent = `
+    /* Hide mobile sections on desktop/tablet */
+    body.desktop .mobile-sections-bar,
+    body.desktop .mobile-sections-content,
+    body.tablet-portrait .mobile-sections-bar,
+    body.tablet-portrait .mobile-sections-content,
+    body.tablet-landscape .mobile-sections-bar,
+    body.tablet-landscape .mobile-sections-content {
+      display: none !important;
+    }
+    
+    /* Show desktop navigation on tablets (override Tailwind's md:hidden at 768px) */
+    body.tablet-portrait header .hidden.md\\:block,
+    body.tablet-landscape header .hidden.md\\:block {
+      display: block !important;
+    }
+    
     /* Both phone orientations: Mobile dropdown menu with line/arrow */
     body.phone-portrait .md\\:hidden.mobile-sections-bar,
     body.phone-portrait .md\\:hidden.mobile-sections-content,

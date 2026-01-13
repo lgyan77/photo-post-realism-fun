@@ -303,6 +303,11 @@ function createPhotoSection(section, onPhotoClick) {
   return sectionEl;
 }
 
+// Helper: Check if device is mobile or tablet
+function isMobileOrTablet() {
+  return 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+}
+
 // Create Lightbox component (Enhanced from base44)
 function createLightbox(photos, currentIndex, onClose, onNavigate) {
   const lightbox = document.createElement('div');
@@ -575,6 +580,74 @@ function createLightbox(photos, currentIndex, onClose, onNavigate) {
   lightbox.addEventListener('touchmove', handleTouchMove, { passive: false });
   lightbox.addEventListener('touchend', handleTouchEnd, { passive: false });
 
+  // Mobile/Tablet: Swipe-down to close and pinch-to-close
+  let swipeDownStartY = 0;
+  let initialPinchDistance = 0;
+  
+  const handleCloseGestures = (e) => {
+    if (!isMobileOrTablet()) return;
+    
+    // Swipe-down detection (single touch)
+    if (e.touches.length === 1) {
+      swipeDownStartY = e.touches[0].clientY;
+      initialPinchDistance = 0;
+    }
+    // Pinch detection (two touches)
+    else if (e.touches.length === 2) {
+      const touch1 = e.touches[0];
+      const touch2 = e.touches[1];
+      initialPinchDistance = Math.hypot(
+        touch2.clientX - touch1.clientX,
+        touch2.clientY - touch1.clientY
+      );
+      swipeDownStartY = 0;
+    }
+  };
+  
+  const handleCloseGesturesMove = (e) => {
+    if (!isMobileOrTablet()) return;
+    
+    // Check for pinch-to-close (two fingers pinching in)
+    if (e.touches.length === 2 && initialPinchDistance > 0) {
+      const touch1 = e.touches[0];
+      const touch2 = e.touches[1];
+      const currentDistance = Math.hypot(
+        touch2.clientX - touch1.clientX,
+        touch2.clientY - touch1.clientY
+      );
+      
+      // If pinched in by more than 30%, close
+      const pinchRatio = currentDistance / initialPinchDistance;
+      if (pinchRatio < 0.7) {
+        onClose();
+      }
+    }
+  };
+  
+  const handleCloseGesturesEnd = (e) => {
+    if (!isMobileOrTablet()) return;
+    
+    // Check for swipe-down (vertical swipe down by >100px)
+    if (swipeDownStartY > 0 && e.changedTouches.length === 1) {
+      const swipeDownEndY = e.changedTouches[0].clientY;
+      const deltaY = swipeDownEndY - swipeDownStartY;
+      
+      // Swipe down (not up) and significant distance
+      if (deltaY > 100) {
+        onClose();
+      }
+    }
+    
+    // Reset
+    swipeDownStartY = 0;
+    initialPinchDistance = 0;
+  };
+  
+  // Add close gesture listeners
+  lightbox.addEventListener('touchstart', handleCloseGestures, { passive: true });
+  lightbox.addEventListener('touchmove', handleCloseGesturesMove, { passive: true });
+  lightbox.addEventListener('touchend', handleCloseGesturesEnd, { passive: true });
+
   // Desktop trackpad gestures (two-finger swipe)
   let wheelDeltaAccumulator = 0;
   let hasNavigatedInGesture = false; // Has current gesture navigated?
@@ -646,6 +719,26 @@ function createLightbox(photos, currentIndex, onClose, onNavigate) {
   document.body.style.overflow = 'hidden';
   document.body.style.overscrollBehavior = 'none';
   document.documentElement.style.overscrollBehavior = 'none';
+  
+  // Mobile: Support back button to close lightbox
+  if (isMobileOrTablet()) {
+    // Push a history state so back button can close lightbox
+    history.pushState({ lightboxOpen: true }, '');
+    
+    // Listen for back button
+    const handlePopState = (e) => {
+      if (state.lightbox.isOpen) {
+        e.preventDefault();
+        onClose();
+      }
+    };
+    
+    window.addEventListener('popstate', handlePopState);
+    
+    // Store handler so we can remove it later
+    lightbox.dataset.popStateHandler = 'attached';
+    lightbox._popStateHandler = handlePopState;
+  }
 
   return lightbox;
 }
@@ -664,6 +757,10 @@ function closeLightbox() {
   // Remove keyboard listener and lightbox
   const existingLightbox = document.getElementById('lightbox');
   if (existingLightbox) {
+    // Clean up popstate listener if it exists
+    if (existingLightbox._popStateHandler) {
+      window.removeEventListener('popstate', existingLightbox._popStateHandler);
+    }
     existingLightbox.remove();
   }
   
@@ -677,6 +774,12 @@ function closeLightbox() {
     sectionId: null,
     photoIndex: 0
   };
+  
+  // If we pushed a history state, go back to remove it (but only if lightbox was actually open)
+  // This prevents the user from going "forward" to a closed lightbox
+  if (history.state && history.state.lightboxOpen) {
+    history.back();
+  }
 }
 
 function navigateLightbox(newIndex) {
