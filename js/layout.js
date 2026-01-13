@@ -888,11 +888,17 @@ function initLayout() {
   });
 
   // Setup scroll buttons
-  document.getElementById('scroll-to-top-logo').addEventListener('click', () => {
+  document.getElementById('scroll-to-top-logo').addEventListener('click', (e) => {
+    e.preventDefault();
+    
     // Clear hash from URL (e.g., example.com/#section → example.com/)
     if (window.location.hash) {
-      history.replaceState(null, '', window.location.pathname + window.location.search);
+      // Build clean URL without hash (GitHub Pages compatible)
+      const url = new URL(window.location.href);
+      url.hash = '';
+      history.replaceState(null, document.title, url.toString());
     }
+    
     // Scroll to top
     window.scrollTo({ top: 0, behavior: 'smooth' });
   });
