@@ -340,21 +340,9 @@ function createLightbox(photos, currentIndex, onClose, onNavigate) {
       /* Prevent pull-to-refresh and overscroll in lightbox */
       #lightbox {
         overscroll-behavior: contain;
-        touch-action: pan-x pan-y pinch-zoom;
+        touch-action: manipulation;
       }
-      /* Mobile-specific sizing - 3mm clearance outside white frame */
-      @media (max-width: 768px) {
-        .lightbox-scale-in {
-          padding: 3mm !important;
-        }
-        .lightbox-outer-frame {
-          padding: 0mm !important;
-        }
-        .lightbox-image {
-          max-width: calc(100vw - 12mm) !important;
-          max-height: calc(100vh - 12mm) !important;
-        }
-      }
+      /* Mobile-specific sizing handled by device detection in layout.js */
     </style>
 
     <!-- Close button -->

@@ -2,34 +2,58 @@
 // LAYOUT - Enhanced Navigation & Header from base44
 // ===========================
 
-// Detect if device should use mobile layout
-// Phones: always mobile (even in landscape)
-// Tablets: use breakpoint (desktop when wide enough)
-// Desktops: always desktop
-function shouldUseMobileLayout() {
+// Single source of truth for device detection
+function detectDevice() {
   const hasTouch = (
     'ontouchstart' in window ||
     navigator.maxTouchPoints > 0 ||
     navigator.msMaxTouchPoints > 0
   );
   
-  if (!hasTouch) {
-    // Desktop/laptop - use width-based breakpoint
-    return window.innerWidth < 768;
-  }
-  
-  // Touch device - distinguish phone from tablet
-  // If EITHER dimension is < 700px, it's a phone (catches both orientations)
+  const width = window.innerWidth;
+  const height = window.innerHeight;
   const PHONE_THRESHOLD = 700;
-  const isPhone = window.innerWidth < PHONE_THRESHOLD || window.innerHeight < PHONE_THRESHOLD;
+  
+  // Check if it's a phone (either dimension < 700px)
+  const isPhone = hasTouch && (width < PHONE_THRESHOLD || height < PHONE_THRESHOLD);
+  
+  if (!hasTouch) {
+    return {
+      type: width < 768 ? 'desktop-small' : 'desktop',
+      useMobileLayout: width < 768,
+      isPortrait: false
+    };
+  }
   
   if (isPhone) {
-    // Phones always use mobile layout (even in landscape)
-    return true;
+    const isPortrait = height > width;
+    return {
+      type: isPortrait ? 'phone-portrait' : 'phone-landscape',
+      useMobileLayout: width < 768, // For footer behavior
+      isPortrait: isPortrait
+    };
   }
   
-  // Tablet - use width-based breakpoint (allows desktop layout in landscape)
-  return window.innerWidth < 1024;
+  // Tablet
+  return {
+    type: width < 1024 ? 'tablet-portrait' : 'tablet-landscape',
+    useMobileLayout: width < 1024,
+    isPortrait: height > width
+  };
+}
+
+// Apply device classes to body for CSS targeting
+function applyDeviceClasses() {
+  const device = detectDevice();
+  const body = document.body;
+  
+  // Remove all device classes
+  body.classList.remove('phone-portrait', 'phone-landscape', 'tablet-portrait', 'tablet-landscape', 'desktop', 'desktop-small');
+  
+  // Add current device class
+  body.classList.add(device.type);
+  
+  return device;
 }
 
 let layoutState = {
@@ -40,26 +64,297 @@ let layoutState = {
   mobileSectionsOpen: false,
   lastScrollY: 0,
   footerTimeout: null,
-  isMobile: shouldUseMobileLayout()
+  device: null, // Will be set on init
+  isMobile: false // Will be set on init
 };
 
-// Apply mobile layout overrides for small touch devices (phones)
-function applyMobileOverrides() {
-  if (!layoutState.isMobile) return;
-  
-  // Add custom CSS to force mobile layout on phones in landscape
+// Apply device-specific CSS overrides (single source of truth)
+function applyDeviceStyles() {
   const style = document.createElement('style');
   style.textContent = `
-    /* Force mobile layout on small touch devices (phones) even in landscape */
-    @media (hover: none) and (pointer: coarse) and (max-height: 1023px) {
-      .md\\:hidden.mobile-sections-bar,
-      .md\\:hidden.mobile-sections-content {
-        display: block !important;
-      }
-      
-      .hidden.md\\:flex.header-controls,
-      .hidden.md\\:block > nav {
-        display: none !important;
+    /* Both phone orientations: Mobile dropdown menu with line/arrow */
+    body.phone-portrait .md\\:hidden.mobile-sections-bar,
+    body.phone-portrait .md\\:hidden.mobile-sections-content,
+    body.phone-landscape .md\\:hidden.mobile-sections-bar,
+    body.phone-landscape .md\\:hidden.mobile-sections-content {
+      display: block !important;
+    }
+    
+    /* Desktop horizontal tags section is removed from DOM on phones (see createHeader) */
+    
+    /* Both phone orientations: Hide header control buttons */
+    body.phone-portrait .hidden.md\\:flex.header-controls,
+    body.phone-landscape .hidden.md\\:flex.header-controls {
+      display: none !important;
+    }
+    
+    /* Both phone orientations: Force mobile spacing */
+    body.phone-portrait header .px-6.md\\:px-12,
+    body.phone-landscape header .px-6.md\\:px-12 {
+      padding-left: 1.5rem !important;
+      padding-right: 1.5rem !important;
+    }
+    
+    body.phone-portrait header .py-5.md\\:py-6,
+    body.phone-landscape header .py-5.md\\:py-6 {
+      padding-top: 1.25rem !important;
+      padding-bottom: 0.25rem !important;
+    }
+    
+    /* No negative margin - let bar sit naturally */
+    
+    body.phone-portrait header .text-3xl.md\\:text-4xl,
+    body.phone-landscape header .text-3xl.md\\:text-4xl {
+      font-size: 1.875rem !important;
+      line-height: 2.25rem !important;
+    }
+    
+    body.phone-portrait footer.px-6.md\\:px-12,
+    body.phone-landscape footer.px-6.md\\:px-12 {
+      padding-left: 1.5rem !important;
+      padding-right: 1.5rem !important;
+    }
+    
+    body.phone-portrait section.py-5.md\\:py-16,
+    body.phone-landscape section.py-5.md\\:py-16 {
+      padding-top: 1.25rem !important;
+      padding-bottom: 1.25rem !important;
+    }
+    
+    body.phone-portrait .px-8.md\\:px-16,
+    body.phone-landscape .px-8.md\\:px-16 {
+      padding-left: 2rem !important;
+      padding-right: 2rem !important;
+    }
+    
+    body.phone-portrait .text-2xl.md\\:text-3xl,
+    body.phone-landscape .text-2xl.md\\:text-3xl {
+      font-size: 1.5rem !important;
+      line-height: 2rem !important;
+    }
+    
+    body.phone-portrait .text-sm.md\\:text-base,
+    body.phone-landscape .text-sm.md\\:text-base {
+      font-size: 0.875rem !important;
+      line-height: 1.25rem !important;
+    }
+    
+    body.phone-portrait main.pt-2.md\\:pt-6,
+    body.phone-landscape main.pt-2.md\\:pt-6 {
+      padding-top: 0.5rem !important;
+    }
+    
+    body.phone-portrait .h-\\[100px\\].md\\:h-\\[140px\\],
+    body.phone-landscape .h-\\[100px\\].md\\:h-\\[140px\\] {
+      height: 100px !important;
+    }
+    
+    /* Both phone orientations: Lightbox with 3mm clearance outside white frame */
+    body.phone-portrait #lightbox .lightbox-scale-in,
+    body.phone-landscape #lightbox .lightbox-scale-in {
+      padding: 3mm !important;
+    }
+    
+    body.phone-portrait #lightbox .lightbox-outer-frame,
+    body.phone-landscape #lightbox .lightbox-outer-frame {
+      padding: 0mm !important;
+    }
+    
+    body.phone-portrait #lightbox .lightbox-image,
+    body.phone-landscape #lightbox .lightbox-image {
+      max-width: calc(100vw - 12mm) !important;
+      max-height: calc(100vh - 12mm) !important;
+    }
+    
+    /* Hide metadata on phones to keep image centered */
+    body.phone-portrait #lightbox .text-white\\/60.text-xs.space-y-2,
+    body.phone-landscape #lightbox .text-white\\/60.text-xs.space-y-2 {
+      display: none !important;
+    }
+    
+  `;
+  document.head.appendChild(style);
+}
+
+// Apply header-specific styles to document head
+function applyHeaderStyles() {
+  const style = document.createElement('style');
+  style.textContent = `
+    html {
+      scroll-behavior: smooth;
+    }
+    
+    * {
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+    
+    /* Smooth transitions for main content when mobile menu expands */
+    #main-content {
+      transition: none;
+    }
+    
+    .dropdown-content {
+      display: none;
+      opacity: 0;
+      transform: translateY(-10px);
+      transition: opacity 0.2s ease, transform 0.2s ease;
+    }
+    .dropdown-content.open {
+      display: block;
+      opacity: 1;
+      transform: translateY(0);
+    }
+    
+    /* Mobile sections menu styles */
+    .mobile-sections-bar {
+      position: relative;
+      height: 40px;
+      background: white;
+      cursor: pointer;
+      user-select: none;
+      overflow: visible;
+      z-index: 30;
+      will-change: transform;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1),
+                  opacity 0.3s ease;
+      pointer-events: none;
+    }
+    
+    /* Only the center area is clickable */
+    .mobile-sections-bar > * {
+      pointer-events: auto;
+    }
+    
+    .mobile-sections-bar.sliding-down {
+      transform: translateY(0);
+    }
+    
+    .mobile-sections-bar.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+    
+    /* Side lines - move down with animation */
+    .mobile-sections-bar::before,
+    .mobile-sections-bar::after {
+      content: '';
+      position: absolute;
+      top: 16px;
+      height: 0;
+      border-top: 1px solid black;
+      transition: top 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    .mobile-sections-bar::before {
+      left: 0;
+      right: calc(50% + 75px);
+    }
+    
+    .mobile-sections-bar::after {
+      left: calc(50% + 75px);
+      right: 0;
+    }
+    
+    /* When open, side lines move to bottom position */
+    .mobile-sections-bar.open::before,
+    .mobile-sections-bar.open::after {
+      top: 28px;
+    }
+    
+    .mobile-sections-arrow {
+      position: absolute;
+      left: 50%;
+      top: 0;
+      transform: translateX(-50%);
+      width: 150px;
+      height: 40px;
+    }
+    
+    .mobile-sections-arrow-path {
+      stroke: black;
+      stroke-width: 1;
+      fill: none;
+      vector-effect: non-scaling-stroke;
+      transition: d 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    .mobile-sections-arrow-accent {
+      stroke: #ef4444;
+      stroke-width: 1;
+      fill: none;
+      stroke-linejoin: miter;
+      vector-effect: non-scaling-stroke;
+      transition: d 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    .mobile-sections-text {
+      position: absolute;
+      top: 38.46%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 1;
+      font-size: 16px;
+      line-height: 1;
+      letter-spacing: 0.2em;
+      color: #999;
+      font-weight: 300;
+      text-transform: uppercase;
+      background: white;
+      padding: 0 8px;
+      opacity: 1;
+      white-space: nowrap;
+      transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    .mobile-sections-content {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      height: 0;
+      overflow: hidden;
+      background: white;
+      z-index: 29;
+      transition: height 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+      pointer-events: none;
+    }
+    
+    .mobile-sections-content.open {
+      height: auto;
+      pointer-events: auto;
+    }
+    
+    .mobile-section-links {
+      padding: 0px 20px 40px 20px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px 24px;
+      justify-content: center;
+    }
+    
+    .mobile-section-link {
+      font-size: 11px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #666;
+      font-weight: 300;
+      transition: color 0.2s ease;
+    }
+    
+    .mobile-section-link:active {
+      color: black;
+    }
+    
+    /* Vertical button layout on mobile */
+    @media (max-width: 640px) {
+      .header-controls {
+        flex-direction: column;
+        gap: 12px;
+        align-items: center;
       }
     }
   `;
@@ -73,158 +368,13 @@ function createHeader() {
   header.className = 'sticky top-0 left-0 right-0 z-40 transition-all duration-500 bg-white/95 backdrop-blur-sm';
 
   header.innerHTML = `
-    <style>
-      html {
-        scroll-behavior: smooth;
-      }
-      * {
-        -webkit-font-smoothing: antialiased;
-        -moz-osx-font-smoothing: grayscale;
-      }
-      
-      /* Smooth transitions for main content when mobile menu expands */
-      #main-content {
-        transition: none;
-      }
-      
-      .dropdown-content {
-        display: none;
-        opacity: 0;
-        transform: translateY(-10px);
-        transition: opacity 0.2s ease, transform 0.2s ease;
-      }
-      .dropdown-content.open {
-        display: block;
-        opacity: 1;
-        transform: translateY(0);
-      }
-      
-      /* Mobile sections menu styles */
-      .mobile-sections-bar {
-        position: relative;
-        height: 26px;
-        background: white;
-        cursor: pointer;
-        user-select: none;
-        touch-action: none;
-        border-top: 1px solid #f0f0f0;
-        overflow: visible;
-        z-index: 11;
-        will-change: transform;
-        transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1),
-                    opacity 0.3s ease;
-      }
-      
-      .mobile-sections-bar.sliding-down {
-        transform: translateY(0);
-      }
-      
-      .mobile-sections-bar.hidden {
-        opacity: 0;
-        pointer-events: none;
-      }
-      
-      .mobile-sections-arrow {
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 100%;
-        width: 100%;
-        pointer-events: none;
-      }
-      
-      .mobile-sections-arrow-path {
-        stroke: black;
-        stroke-width: 1;
-        fill: none;
-        vector-effect: non-scaling-stroke;
-        transition: d 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-      }
-      
-      .mobile-sections-arrow-accent {
-        stroke: #ef4444;
-        stroke-width: 1;
-        fill: none;
-        stroke-linejoin: miter;
-        vector-effect: non-scaling-stroke;
-        transition: d 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-      }
-      
-      .mobile-sections-text {
-        position: absolute;
-        top: 38.46%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        z-index: 1;
-        font-size: 8px;
-        line-height: 1;
-        letter-spacing: 0.2em;
-        color: #999;
-        font-weight: 300;
-        text-transform: uppercase;
-        pointer-events: none;
-        background: transparent;
-        padding: 0 3px;
-        opacity: 1;
-        transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      }
-      
-      .mobile-sections-content {
-        position: absolute;
-        top: 100%;
-        left: 0;
-        right: 0;
-        height: 0;
-        overflow: hidden;
-        background: white;
-        z-index: 10;
-        transition: height 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-      }
-      
-      .mobile-sections-content.open {
-        height: auto;
-      }
-      
-      .mobile-section-links {
-        padding: 16px 20px 40px 20px; /* Extra bottom padding for line clearance */
-        display: flex;
-        flex-wrap: wrap;
-        gap: 16px 24px;
-        justify-content: center;
-      }
-      
-      .mobile-section-link {
-        font-size: 11px;
-        letter-spacing: 0.1em;
-        text-transform: uppercase;
-        color: #666;
-        font-weight: 300;
-        transition: color 0.2s ease;
-      }
-      
-      .mobile-section-link:active {
-        color: black;
-      }
-      
-      /* Vertical button layout on mobile */
-      @media (max-width: 640px) {
-        .header-controls {
-          flex-direction: column;
-          gap: 12px;
-          align-items: center;
-        }
-      }
-    </style>
-
     <!-- Top bar with title and controls -->
     <div class="px-6 md:px-12 lg:px-16 py-5 md:py-6 border-b border-gray-100">
       <div class="flex items-center justify-between">
         <!-- Logo/Title -->
         <button
           id="scroll-to-top-logo"
-          class="text-3xl md:text-4xl lg:text-5xl font-extralight tracking-wide text-black hover:opacity-60 transition-opacity duration-300"
-          style="font-family: Georgia, serif"
+          class="text-3xl md:text-4xl lg:text-5xl font-light tracking-tight text-black hover:opacity-60 transition-opacity duration-300"
           title="Scroll to top"
         >
           Photo Post-Realism Is Fun
@@ -297,15 +447,15 @@ function createHeader() {
     
     <!-- Mobile sections menu bar -->
     <div class="md:hidden mobile-sections-bar" id="mobile-sections-bar">
-      <svg class="mobile-sections-arrow" viewBox="0 0 100 26" preserveAspectRatio="none">
-        <!-- Black line: y=10 on sides, drops at x=43-57 deeper below text, then narrow 60° V -->
+      <svg class="mobile-sections-arrow" viewBox="0 0 150 40" preserveAspectRatio="none">
+        <!-- Black line: dropped area with V (fixed 150px width total) -->
         <path class="mobile-sections-arrow-path" id="mobile-arrow-path" 
-              d="M 0,10 L 43,10 L 43,16 L 47.7,16 L 50,24 L 52.3,16 L 57,16 L 57,10 L 100,10" />
-        <!-- Red accent: same dimensions as black, just 1 unit lower -->
+              d="M 0,16 L 0,16 L 0,28 L 65,28 L 75,38 L 85,28 L 150,28 L 150,16 L 150,16" />
+        <!-- Red accent: doubles the V -->
         <path class="mobile-sections-arrow-accent" id="mobile-arrow-accent" 
-              d="M 47.7,17 L 50,25 L 52.3,17" />
+              d="M 65,29 L 75,39 L 85,29" />
       </svg>
-      <span class="mobile-sections-text">Sections</span>
+      <span class="mobile-sections-text" id="mobile-sections-text">Sections</span>
     </div>
     
     <!-- Mobile sections expandable content -->
@@ -393,6 +543,37 @@ function updateFooterVisibility() {
   layoutState.lastScrollY = currentScrollY;
 }
 
+// Set fixed SVG path for mobile sections bar (150px fixed width)
+function updateMobileSectionsPath() {
+  const arrowPath = document.getElementById('mobile-arrow-path');
+  const arrowAccent = document.getElementById('mobile-arrow-accent');
+  
+  if (!arrowPath || !arrowAccent) return;
+  
+  // Collapsed: Top line (y=16), drops to y=28 around text, downward V to y=38
+  const collapsedPath = 'M 0,16 L 0,16 L 0,28 L 65,28 L 75,38 L 85,28 L 150,28 L 150,16 L 150,16';
+  const collapsedAccent = 'M 65,29 L 75,39 L 85,29';
+  
+  // Expanded: Everything at y=28, upward V to y=18 (drop disappears, V flips)
+  const expandedPath = 'M 0,28 L 0,28 L 0,28 L 65,28 L 75,18 L 85,28 L 150,28 L 150,28 L 150,28';
+  const expandedAccent = 'M 65,27 L 75,17 L 85,27';
+  
+  // Store paths
+  const bar = document.getElementById('mobile-sections-bar');
+  if (bar) {
+    bar.dataset.collapsedPath = collapsedPath;
+    bar.dataset.collapsedAccent = collapsedAccent;
+    bar.dataset.expandedPath = expandedPath;
+    bar.dataset.expandedAccent = expandedAccent;
+  }
+  
+  // Apply collapsed path if not open
+  if (!layoutState.mobileSectionsOpen) {
+    arrowPath.setAttribute('d', collapsedPath);
+    arrowAccent.setAttribute('d', collapsedAccent);
+  }
+}
+
 // Mobile sections menu functions
 function openMobileSectionsMenu() {
   layoutState.mobileSectionsOpen = true;
@@ -405,6 +586,13 @@ function openMobileSectionsMenu() {
   // Hide "sections" text immediately
   if (sectionsText) {
     sectionsText.style.opacity = '0';
+  }
+  
+  // Flatten the line IMMEDIATELY (no vertical bars during slide)
+  if (arrowPath && arrowAccent && topBar) {
+    arrowPath.setAttribute('d', topBar.dataset.expandedPath);
+    arrowAccent.setAttribute('d', topBar.dataset.expandedAccent);
+    topBar.classList.add('open'); // Side lines move down too
   }
   
   // Measure height after a frame to ensure accurate measurement
@@ -435,15 +623,6 @@ function openMobileSectionsMenu() {
       });
     });
   }
-  
-  // After sliding down, flip arrow smoothly (no hiding)
-  setTimeout(() => {
-    if (arrowPath && arrowAccent) {
-      // Change to straight line with upward V
-      arrowPath.setAttribute('d', 'M 0,16 L 47.7,16 L 50,8 L 52.3,16 L 100,16');
-      arrowAccent.setAttribute('d', 'M 47.7,15 L 50,7 L 52.3,15');
-    }
-  }, 600);
 }
 
 function closeMobileSectionsMenu() {
@@ -463,25 +642,34 @@ function closeMobileSectionsMenu() {
     content.classList.remove('open');
   }
   
-  // Slide bar up
+  // Slide bar up (stays flat with upward V all the way)
   requestAnimationFrame(() => {
     if (topBar) {
       topBar.style.transform = 'translateY(0)';
+      // Keep 'open' class during slide up so line stays flat
     }
   });
   
-  // Show text
-  if (sectionsText) {
-    sectionsText.style.opacity = '1';
-  }
-  
-  // After animation completes, flip arrow back to down position
+  // After bar reaches top (600ms), THEN morph: flip V + show drop + show text
   setTimeout(() => {
-    if (arrowPath && arrowAccent) {
-      arrowPath.setAttribute('d', 'M 0,10 L 43,10 L 43,16 L 47.7,16 L 50,24 L 52.3,16 L 57,16 L 57,10 L 100,10');
-      arrowAccent.setAttribute('d', 'M 47.7,17 L 50,25 L 52.3,17');
+    // Remove 'open' class to bring side lines back to top position
+    if (topBar) {
+      topBar.classList.remove('open');
     }
-  }, 600); // Match content collapse duration
+    
+    // Flip arrow to downward V and create dropped area
+    if (arrowPath && arrowAccent && topBar) {
+      arrowPath.setAttribute('d', topBar.dataset.collapsedPath);
+      arrowAccent.setAttribute('d', topBar.dataset.collapsedAccent);
+    }
+    
+    // Show "Sections" text after morph starts
+    setTimeout(() => {
+      if (sectionsText) {
+        sectionsText.style.opacity = '1';
+      }
+    }, 100);
+  }, 600); // Wait for bar to reach top
 }
 
 function toggleMobileSectionsMenu() {
@@ -618,8 +806,16 @@ function toggleDropdown(open) {
 
 // Initialize layout
 function initLayout() {
-  // Apply mobile overrides for touch devices
-  applyMobileOverrides();
+  // Apply device-specific styles once
+  applyDeviceStyles();
+  
+  // Apply header styles to document head
+  applyHeaderStyles();
+  
+  // Detect device and apply classes
+  const device = applyDeviceClasses();
+  layoutState.device = device;
+  layoutState.isMobile = device.useMobileLayout;
   
   // Don't add layout to contact page
   if (window.location.pathname.includes('contact.html')) {
@@ -631,6 +827,14 @@ function initLayout() {
   // Create and insert header at the beginning
   const header = createHeader();
   body.insertBefore(header, body.firstChild);
+  
+  // Remove desktop navigation from DOM on phones (cleaner than hiding)
+  if (layoutState.device && (layoutState.device.type === 'phone-portrait' || layoutState.device.type === 'phone-landscape')) {
+    const desktopNav = header.querySelector('.hidden.md\\:block');
+    if (desktopNav) {
+      desktopNav.remove();
+    }
+  }
 
   // Create main wrapper if doesn't exist
   let main = document.getElementById('main-content');
@@ -660,9 +864,11 @@ function initLayout() {
     updateFooterVisibility();
   });
   
-  // Update mobile state on resize/orientation change
+  // Update device detection on resize/orientation change
   window.addEventListener('resize', () => {
-    layoutState.isMobile = shouldUseMobileLayout();
+    const device = applyDeviceClasses();
+    layoutState.device = device;
+    layoutState.isMobile = device.useMobileLayout;
   });
 
   // Setup scroll buttons
@@ -713,6 +919,11 @@ function initLayout() {
   const mobileSectionsBar = document.getElementById('mobile-sections-bar');
   const mobileSectionsBarBottom = document.getElementById('mobile-sections-bar-bottom');
   const mobileSectionsContent = document.getElementById('mobile-sections-content');
+  
+  // Store animation paths
+  if (mobileSectionsBar) {
+    updateMobileSectionsPath();
+  }
   
   if (mobileSectionsBar) {
     // Click/tap to toggle
