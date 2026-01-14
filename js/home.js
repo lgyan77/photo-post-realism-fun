@@ -350,14 +350,9 @@ function createLightbox(photos, currentIndex, onClose, onNavigate) {
         from { opacity: 0; transform: scale(0.95); }
         to { opacity: 1; transform: scale(1); }
       }
-      /* Smoothly handle orientation/viewport changes (prevents jumpy re-layout) */
-      .lightbox-content {
-        will-change: transform, opacity;
-        transition: transform 420ms ease, opacity 420ms ease;
-      }
-      #lightbox.rotating .lightbox-content {
-        transform: scale(0.985);
-        opacity: 0.88;
+      /* FLIP animation target for smooth orientation/viewport relayout */
+      .lightbox-outer-frame {
+        will-change: transform;
       }
       /* Prevent pull-to-refresh and overscroll in lightbox */
       #lightbox {
@@ -741,25 +736,77 @@ function createLightbox(photos, currentIndex, onClose, onNavigate) {
   // Add wheel listener for trackpad gestures
   lightbox.addEventListener('wheel', handleWheel, { passive: false });
 
-  // Mobile: make orientation/viewport changes feel smooth (avoid jumpy re-layout)
-  // We can't animate the OS rotation, but we can animate the lightbox content as the browser relayouts.
-  let rotateAnimTimer = null;
-  const triggerRotateAnim = () => {
-    lightbox.classList.add('rotating');
-    if (rotateAnimTimer) clearTimeout(rotateAnimTimer);
-    rotateAnimTimer = setTimeout(() => {
-      lightbox.classList.remove('rotating');
-    }, 230);
+  // FLIP animation for smooth orientation/viewport relayout (prevents "jump")
+  // This animates the frame from its previous on-screen position/size to the new one.
+  const initFlip = () => {
+    const frame = lightbox.querySelector('.lightbox-outer-frame');
+    if (!frame) return;
+    lightbox._flipLastRect = frame.getBoundingClientRect();
   };
 
+  const runFlip = () => {
+    const frame = lightbox.querySelector('.lightbox-outer-frame');
+    if (!frame) return;
+
+    const first = lightbox._flipLastRect;
+    const last = frame.getBoundingClientRect();
+
+    // Update stored rect for next time
+    lightbox._flipLastRect = last;
+
+    if (!first) return;
+    if (!first.width || !first.height || !last.width || !last.height) return;
+
+    const dx = first.left - last.left;
+    const dy = first.top - last.top;
+    const sx = first.width / last.width;
+    const sy = first.height / last.height;
+
+    // Ignore tiny changes (prevents jitter)
+    if (Math.abs(dx) < 0.5 && Math.abs(dy) < 0.5 && Math.abs(1 - sx) < 0.005 && Math.abs(1 - sy) < 0.005) return;
+
+    // Cancel previous animation if any
+    if (frame._flipAnim) {
+      try { frame._flipAnim.cancel(); } catch (_) {}
+    }
+
+    frame.style.transformOrigin = 'top left';
+    frame._flipAnim = frame.animate(
+      [
+        { transform: `translate(${dx}px, ${dy}px) scale(${sx}, ${sy})` },
+        { transform: 'translate(0px, 0px) scale(1, 1)' }
+      ],
+      {
+        duration: 420,
+        easing: 'cubic-bezier(0.22, 1, 0.36, 1)',
+        fill: 'both'
+      }
+    );
+  };
+
+  let flipRAF = 0;
+  const scheduleFlip = () => {
+    if (flipRAF) cancelAnimationFrame(flipRAF);
+    flipRAF = requestAnimationFrame(() => {
+      flipRAF = 0;
+      runFlip();
+    });
+  };
+
+  // Initialize once mounted (we're still inside createLightbox; it will be appended right after)
+  // rAF ensures we measure after layout.
+  requestAnimationFrame(() => {
+    initFlip();
+  });
+
   // orientationchange is inconsistent across browsers; resize/visualViewport catches most cases.
-  const handleWindowResize = () => triggerRotateAnim();
-  window.addEventListener('orientationchange', handleWindowResize, { passive: true });
-  window.addEventListener('resize', handleWindowResize, { passive: true });
-  lightbox._orientationResizeHandler = handleWindowResize;
+  const handleViewportChange = () => scheduleFlip();
+  window.addEventListener('orientationchange', handleViewportChange, { passive: true });
+  window.addEventListener('resize', handleViewportChange, { passive: true });
+  lightbox._orientationResizeHandler = handleViewportChange;
 
   if (window.visualViewport) {
-    const handleVVResize = () => triggerRotateAnim();
+    const handleVVResize = () => scheduleFlip();
     window.visualViewport.addEventListener('resize', handleVVResize, { passive: true });
     lightbox._visualViewportResizeHandler = handleVVResize;
   }
