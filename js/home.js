@@ -315,6 +315,25 @@ function getImageUrl(photo) {
   return isMobileOrTablet() && photo.mobileUrl ? photo.mobileUrl : photo.url;
 }
 
+function buildLightboxSlideHTML(photo) {
+  if (!photo) {
+    return `<div class="lightbox-slide-empty" aria-hidden="true"></div>`;
+  }
+
+  return `
+    <div class="lightbox-outer-frame relative bg-black flex items-center justify-center" style="padding: 5mm;">
+      <div class="border border-white bg-black flex items-center justify-center" style="padding: 3mm;">
+        <img
+          src="${getImageUrl(photo)}"
+          alt="${photo.title || 'Photo'}"
+          class="block lightbox-image"
+          style="max-width: calc(100vw - 46mm); max-height: calc(100vh - 66mm); width: auto; height: auto;"
+        />
+      </div>
+    </div>
+  `;
+}
+
 // Lightbox image preloading (neighbors)
 const lightboxPreloadCache = new Map(); // url -> HTMLImageElement
 
@@ -343,6 +362,26 @@ function preloadLightboxNeighbors(photos, currentIndex) {
 
   if (prev) preloadImage(getImageUrl(prev));
   if (next) preloadImage(getImageUrl(next));
+}
+
+function resetLightboxCarouselPosition() {
+  const lightbox = document.getElementById('lightbox');
+  if (!lightbox) return;
+  const carousel = lightbox.querySelector('#lightbox-carousel');
+  const track = lightbox.querySelector('#lightbox-track');
+  if (!carousel || !track) return;
+
+  const gap = getComputedStyle(track).gap || '0px';
+  const gapPx = Number.isFinite(parseFloat(gap)) ? parseFloat(gap) : 0;
+  const step = carousel.clientWidth + gapPx;
+
+  track.style.transition = 'none';
+  track.style.transform = `translate3d(${-step}px, 0, 0)`;
+  void track.offsetHeight;
+  track.style.transition = '';
+
+  // Store for optional debugging/usage
+  lightbox._carouselStep = step;
 }
 
 // Create Lightbox component (Enhanced from base44)
@@ -385,6 +424,28 @@ function createLightbox(photos, currentIndex, onClose, onNavigate) {
         overscroll-behavior: contain;
         touch-action: pan-x pan-y;
       }
+      /* Film-strip carousel (drag follows finger, with aesthetic gaps) */
+      #lightbox .lightbox-carousel {
+        width: 100%;
+        overflow: hidden;
+        touch-action: pan-y; /* allow vertical gestures, horizontal handled manually */
+      }
+      #lightbox .lightbox-track {
+        display: flex;
+        align-items: center;
+        gap: clamp(14px, 3vw, 28px);
+        will-change: transform;
+        transform: translate3d(0, 0, 0);
+      }
+      #lightbox .lightbox-slide {
+        flex: 0 0 100%;
+        display: flex;
+        justify-content: center;
+      }
+      #lightbox .lightbox-slide-empty {
+        width: 100%;
+        height: 1px;
+      }
       /* Mobile-specific sizing handled by device detection in layout.js */
     </style>
 
@@ -406,50 +467,51 @@ function createLightbox(photos, currentIndex, onClose, onNavigate) {
 
     <!-- Main content container -->
     <div class="lightbox-content relative flex flex-col items-center justify-center w-full h-full lightbox-scale-in" style="padding: 15mm;">
-      <!-- Image with white frame (matted photo effect) -->
-      <div class="lightbox-outer-frame relative bg-black flex items-center justify-center" style="padding: 5mm;">
-        <div class="border border-white bg-black flex items-center justify-center" style="padding: 3mm;">
-          <img
-            src="${getImageUrl(photo)}"
-            alt="${photo.title || 'Photo'}"
-            class="block lightbox-image"
-            style="max-width: calc(100vw - 46mm); max-height: calc(100vh - 66mm); width: auto; height: auto;"
-          />
+      <!-- Film-strip carousel -->
+      <div class="lightbox-carousel" id="lightbox-carousel">
+        <div class="lightbox-track" id="lightbox-track">
+          <div class="lightbox-slide" data-slot="prev">
+            ${buildLightboxSlideHTML(photos[currentIndex - 1])}
+          </div>
+          <div class="lightbox-slide" data-slot="current">
+            ${buildLightboxSlideHTML(photo)}
+          </div>
+          <div class="lightbox-slide" data-slot="next">
+            ${buildLightboxSlideHTML(photos[currentIndex + 1])}
+          </div>
         </div>
       </div>
 
       <!-- Metadata and description -->
-      <div class="text-white/60 text-xs space-y-2 max-w-2xl text-center mt-6">
+      <div id="lightbox-meta" class="text-white/60 text-xs space-y-2 max-w-2xl text-center mt-6">
         ${buildMetadataHTML(photo)}
         ${photo.comment ? `<p class="text-white/50 italic font-light">${photo.comment}</p>` : ''}
       </div>
     </div>
 
-    <!-- Left arrow (hidden by default, shown on mouse hover near edge) -->
-    ${currentIndex > 0 ? `
-      <button
-        id="lightbox-prev"
-        class="lightbox-arrow absolute left-8 top-1/2 -translate-y-1/2 text-white/70 hover:text-white transition-colors duration-300"
-        aria-label="Previous photo"
-      >
-        <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="0.5">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"></path>
-        </svg>
-      </button>
-    ` : ''}
+    <!-- Left arrow (shown on mouse hover near edge; hidden entirely on first photo) -->
+    <button
+      id="lightbox-prev"
+      class="lightbox-arrow absolute left-8 top-1/2 -translate-y-1/2 text-white/70 hover:text-white transition-colors duration-300"
+      aria-label="Previous photo"
+      style="display: ${currentIndex > 0 ? 'block' : 'none'};"
+    >
+      <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="0.5">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"></path>
+      </svg>
+    </button>
 
-    <!-- Right arrow (hidden by default, shown on mouse hover near edge) -->
-    ${currentIndex < photos.length - 1 ? `
-      <button
-        id="lightbox-next"
-        class="lightbox-arrow absolute right-8 top-1/2 -translate-y-1/2 text-white/70 hover:text-white transition-colors duration-300"
-        aria-label="Next photo"
-      >
-        <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="0.5">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"></path>
-        </svg>
-      </button>
-    ` : ''}
+    <!-- Right arrow (shown on mouse hover near edge; hidden entirely on last photo) -->
+    <button
+      id="lightbox-next"
+      class="lightbox-arrow absolute right-8 top-1/2 -translate-y-1/2 text-white/70 hover:text-white transition-colors duration-300"
+      aria-label="Next photo"
+      style="display: ${currentIndex < photos.length - 1 ? 'block' : 'none'};"
+    >
+      <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="0.5">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"></path>
+      </svg>
+    </button>
   `;
 
   // Mouse move handler - show arrows only when mouse is near edges
@@ -489,15 +551,73 @@ function createLightbox(photos, currentIndex, onClose, onNavigate) {
     onClose();
   };
 
-  // Navigation buttons (no throttling for clicks)
+  // Film-strip carousel state + helpers
+  const carousel = lightbox.querySelector('#lightbox-carousel');
+  const track = lightbox.querySelector('#lightbox-track');
+
+  const carouselState = {
+    step: 0, // slide width + gap
+    baseX: 0, // centered position (-step)
+    dragging: false,
+    axis: null, // 'x' | 'y' | null
+    startX: 0,
+    startY: 0,
+    lastDX: 0,
+    animating: false
+  };
+
+  const getGapPx = () => {
+    if (!track) return 0;
+    const gap = getComputedStyle(track).gap || '0px';
+    const n = parseFloat(gap);
+    return Number.isFinite(n) ? n : 0;
+  };
+
+  const recalcCarouselStep = () => {
+    if (!carousel || !track) return;
+    carouselState.step = carousel.clientWidth + getGapPx();
+    carouselState.baseX = -carouselState.step;
+    track.style.transition = 'none';
+    track.style.transform = `translate3d(${carouselState.baseX}px, 0, 0)`;
+    // Force reflow then restore transitions for later
+    void track.offsetHeight;
+    track.style.transition = '';
+  };
+
+  const snapTo = (targetX, onDone) => {
+    if (!track) return;
+    carouselState.animating = true;
+    track.style.transition = 'transform 320ms ease';
+    track.style.transform = `translate3d(${targetX}px, 0, 0)`;
+    const done = () => {
+      track.removeEventListener('transitionend', done);
+      carouselState.animating = false;
+      if (typeof onDone === 'function') onDone();
+    };
+    track.addEventListener('transitionend', done);
+  };
+
+  const animateNavigate = (direction) => {
+    if (!track || carouselState.animating) return;
+    const currentIdx = state.lightbox.photoIndex;
+    const hasPrev = currentIdx > 0;
+    const hasNext = currentIdx < photos.length - 1;
+
+    if (direction === -1 && !hasPrev) return snapTo(carouselState.baseX);
+    if (direction === 1 && !hasNext) return snapTo(carouselState.baseX);
+
+    const targetX = direction === 1 ? -2 * carouselState.step : 0;
+    snapTo(targetX, () => {
+      onNavigate(currentIdx + direction);
+    });
+  };
+
+  // Navigation buttons should use the film-strip animation
   const prevBtn = lightbox.querySelector('#lightbox-prev');
   if (prevBtn) {
     prevBtn.onclick = (e) => {
       e.stopPropagation();
-      const currentIdx = state.lightbox.photoIndex;
-      if (currentIdx > 0) {
-        onNavigate(currentIdx - 1);
-      }
+      animateNavigate(-1);
     };
   }
 
@@ -505,10 +625,7 @@ function createLightbox(photos, currentIndex, onClose, onNavigate) {
   if (nextBtn) {
     nextBtn.onclick = (e) => {
       e.stopPropagation();
-      const currentIdx = state.lightbox.photoIndex;
-      if (currentIdx < photos.length - 1) {
-        onNavigate(currentIdx + 1);
-      }
+      animateNavigate(1);
     };
   }
 
@@ -519,104 +636,91 @@ function createLightbox(photos, currentIndex, onClose, onNavigate) {
 
   // Keyboard navigation
   const handleKeyPress = (e) => {
-    // Get current index from state (not closure)
-    const currentIdx = state.lightbox.photoIndex;
-    
     if (e.key === 'Escape') onClose();
-    if (e.key === 'ArrowLeft' && currentIdx > 0) onNavigate(currentIdx - 1);
-    if (e.key === 'ArrowRight' && currentIdx < photos.length - 1) onNavigate(currentIdx + 1);
+    if (e.key === 'ArrowLeft') animateNavigate(-1);
+    if (e.key === 'ArrowRight') animateNavigate(1);
   };
   document.addEventListener('keydown', handleKeyPress);
   lightbox.dataset.keyHandler = 'attached';
 
-  // Touch/Swipe navigation (mobile: 1 finger, desktop: 2 fingers)
-  let touchStartX = 0;
-  let touchStartY = 0;
-  let touchEndX = 0;
-  let touchEndY = 0;
-  let isSwiping = false;
-  let lastSwipeTime = 0; // Only for swipe throttling
+  // Touch drag on carousel (follow finger)
+  if (carousel && track) {
+    recalcCarouselStep();
 
-  const navigateViaSwipe = (newIndex) => {
-    const now = Date.now();
-    if (now - lastSwipeTime < 400) return; // 400ms cooldown for swipes only
-    
-    lastSwipeTime = now;
-    onNavigate(newIndex);
-  };
+    const onTouchStart = (e) => {
+      if (carouselState.animating) return;
+      if (e.touches.length !== 1) return;
+      if (e.target.closest('button')) return;
+      carouselState.dragging = true;
+      carouselState.axis = null;
+      carouselState.startX = e.touches[0].clientX;
+      carouselState.startY = e.touches[0].clientY;
+      carouselState.lastDX = 0;
+      track.style.transition = 'none';
+    };
 
-  const handleTouchStart = (e) => {
-    // Reset swipe tracking
-    touchStartX = e.touches[0].clientX;
-    touchStartY = e.touches[0].clientY;
-    touchEndX = touchStartX;
-    touchEndY = touchStartY;
-    isSwiping = true;
-  };
+    const onTouchMove = (e) => {
+      if (!carouselState.dragging) return;
+      if (e.touches.length !== 1) return;
 
-  const handleTouchMove = (e) => {
-    if (!isSwiping) return;
-    
-    // Update end position during move
-    touchEndX = e.touches[0].clientX;
-    touchEndY = e.touches[0].clientY;
-    
-    // Calculate delta to check if it's horizontal
-    const deltaX = touchEndX - touchStartX;
-    const deltaY = touchEndY - touchStartY;
-    
-    // If horizontal swipe is detected, prevent browser back/forward navigation
-    if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 10) {
-      e.preventDefault();
-      e.stopPropagation();
-    }
-  };
+      const x = e.touches[0].clientX;
+      const y = e.touches[0].clientY;
+      const dx = x - carouselState.startX;
+      const dy = y - carouselState.startY;
 
-  const handleTouchEnd = (e) => {
-    if (!isSwiping) return;
-    isSwiping = false;
-
-    const deltaX = touchEndX - touchStartX;
-    const deltaY = touchEndY - touchStartY;
-    
-    // Minimum swipe distance (80px - increased for better control)
-    const minSwipeDistance = 80;
-    
-    // Check if horizontal swipe (not vertical scroll)
-    if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > minSwipeDistance) {
-      // ALWAYS prevent browser navigation AND propagation on horizontal swipes
-      e.preventDefault();
-      e.stopPropagation();
-      
-      // Get current index from state (not closure)
-      const currentIdx = state.lightbox.photoIndex;
-      
-      // FIX: Swipe LEFT (negative deltaX) = go RIGHT (next photo)
-      //      Swipe RIGHT (positive deltaX) = go LEFT (previous photo)
-      if (deltaX < 0) {
-        // Swipe left - go to next (only if not last image)
-        if (currentIdx < photos.length - 1) {
-          navigateViaSwipe(currentIdx + 1);
-        }
-      } else {
-        // Swipe right - go to previous (only if not first image)
-        if (currentIdx > 0) {
-          navigateViaSwipe(currentIdx - 1);
-        }
+      if (!carouselState.axis) {
+        if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return;
+        carouselState.axis = Math.abs(dx) > Math.abs(dy) ? 'x' : 'y';
       }
-    }
-    
-    // Reset tracking
-    touchStartX = 0;
-    touchStartY = 0;
-    touchEndX = 0;
-    touchEndY = 0;
-  };
 
-  // Add touch event listeners (NOT passive so we can preventDefault)
-  lightbox.addEventListener('touchstart', handleTouchStart, { passive: false });
-  lightbox.addEventListener('touchmove', handleTouchMove, { passive: false });
-  lightbox.addEventListener('touchend', handleTouchEnd, { passive: false });
+      if (carouselState.axis !== 'x') return;
+
+      // Horizontal drag: prevent browser navigation/scroll and other handlers
+      e.preventDefault();
+      e.stopPropagation();
+
+      const currentIdx = state.lightbox.photoIndex;
+      const hasPrev = currentIdx > 0;
+      const hasNext = currentIdx < photos.length - 1;
+
+      // Edge resistance
+      let effDX = dx;
+      if ((dx > 0 && !hasPrev) || (dx < 0 && !hasNext)) {
+        effDX = dx * 0.35;
+      }
+
+      carouselState.lastDX = effDX;
+      track.style.transform = `translate3d(${carouselState.baseX + effDX}px, 0, 0)`;
+    };
+
+    const onTouchEnd = () => {
+      if (!carouselState.dragging) return;
+      carouselState.dragging = false;
+
+      if (carouselState.axis !== 'x') return;
+
+      const dx = carouselState.lastDX;
+      const threshold = Math.min(120, carouselState.step * 0.18);
+
+      if (dx < -threshold) {
+        animateNavigate(1);
+      } else if (dx > threshold) {
+        animateNavigate(-1);
+      } else {
+        snapTo(carouselState.baseX);
+      }
+    };
+
+    carousel.addEventListener('touchstart', onTouchStart, { passive: false });
+    carousel.addEventListener('touchmove', onTouchMove, { passive: false });
+    carousel.addEventListener('touchend', onTouchEnd, { passive: true });
+
+    // Keep step in sync with viewport changes
+    const handleResize = () => recalcCarouselStep();
+    window.addEventListener('resize', handleResize, { passive: true });
+    window.addEventListener('orientationchange', handleResize, { passive: true });
+    lightbox._carouselResizeHandler = handleResize;
+  }
 
   // Mobile/Tablet: Swipe-down to close, swipe-up to hide address bar, and pinch-to-close
   let swipeDownStartY = 0;
@@ -749,9 +853,9 @@ function createLightbox(photos, currentIndex, onClose, onNavigate) {
         
         // Navigate
         if (direction > 0 && currentIdx < photos.length - 1) {
-          onNavigate(currentIdx + 1);
+        animateNavigate(1);
         } else if (direction < 0 && currentIdx > 0) {
-          onNavigate(currentIdx - 1);
+        animateNavigate(-1);
         }
         
         // Don't set a fixed timeout - let the wheel events timeout handle it
@@ -840,6 +944,12 @@ function closeLightbox() {
       window.removeEventListener('scroll', existingLightbox._scrollDownPreventer);
     }
 
+    // Clean up carousel resize handlers
+    if (existingLightbox._carouselResizeHandler) {
+      window.removeEventListener('resize', existingLightbox._carouselResizeHandler);
+      window.removeEventListener('orientationchange', existingLightbox._carouselResizeHandler);
+    }
+
     // Clean up fullscreen change listener on mobile
     if (existingLightbox._fullscreenChangeHandler) {
       document.removeEventListener('fullscreenchange', existingLightbox._fullscreenChangeHandler);
@@ -892,16 +1002,16 @@ function closeLightbox() {
 }
 
 function navigateLightbox(newIndex) {
-  state.lightbox.photoIndex = newIndex;
-  
-  // Instead of recreating entire lightbox, just update the content
+  const currentSection = state.sections.find(s => s.id === state.lightbox.sectionId);
+  if (!currentSection || !currentSection.photos || currentSection.photos.length === 0) return;
+
+  const photos = currentSection.photos;
+  const clampedIndex = Math.max(0, Math.min(newIndex, photos.length - 1));
+  state.lightbox.photoIndex = clampedIndex;
+
   const existingLightbox = document.getElementById('lightbox');
-  if (existingLightbox) {
-    updateLightboxContent(newIndex);
-  } else {
-    // Fallback: recreate if lightbox doesn't exist
-    renderLightbox();
-  }
+  if (existingLightbox) updateLightboxContent(clampedIndex);
+  else renderLightbox();
 }
 
 // Update only the photo content without recreating the entire lightbox
@@ -919,168 +1029,29 @@ function updateLightboxContent(currentIndex) {
     counter.textContent = `${currentIndex + 1} / ${photos.length}`;
   }
 
-  // Cross-fade image transition
-  const imageContainer = document.querySelector('#lightbox .border.border-white');
-  const currentImg = document.querySelector('#lightbox img');
-  
-  if (imageContainer && currentImg) {
-    // Remove any leftover images from previous transitions
-    const allImages = imageContainer.querySelectorAll('img');
-    allImages.forEach((img, index) => {
-      if (index > 0) img.remove(); // Keep only the first (current) image
-    });
-    
-    // Get current image dimensions to maintain container size
-    const currentWidth = currentImg.offsetWidth;
-    const currentHeight = currentImg.offsetHeight;
-    
-    // Set container to fixed dimensions to keep border visible during transition
-    imageContainer.style.width = currentWidth + 'px';
-    imageContainer.style.height = currentHeight + 'px';
-    imageContainer.style.position = 'relative';
-    imageContainer.style.display = 'flex';
-    imageContainer.style.alignItems = 'center';
-    imageContainer.style.justifyContent = 'center';
-    
-    // Create new image (use mobile or desktop version based on device)
-    const newImg = document.createElement('img');
-    newImg.src = getImageUrl(photo);
-    newImg.alt = photo.title || 'Photo';
-    newImg.className = 'block lightbox-image';
-    newImg.style.cssText = 'max-width: calc(100vw - 46mm); max-height: calc(100vh - 66mm); width: auto; height: auto; opacity: 0; position: absolute; top: 0; left: 0; right: 0; bottom: 0; margin: auto;';
-    
-    // Fade out current image
-    currentImg.style.transition = 'opacity 0.4s ease-in-out';
-    currentImg.style.opacity = '0';
-    
-    // Add new image on top
-    imageContainer.appendChild(newImg);
-    
-    // When new image loads, adjust container and fade in
-    newImg.onload = () => {
-      // Adjust container size to new image with transition
-      const newWidth = newImg.offsetWidth;
-      const newHeight = newImg.offsetHeight;
-      
-      imageContainer.style.transition = 'width 0.4s ease-in-out, height 0.4s ease-in-out';
-      imageContainer.style.width = newWidth + 'px';
-      imageContainer.style.height = newHeight + 'px';
-      
-      // Force reflow to ensure opacity: 0 is applied first
-      void newImg.offsetHeight;
-      
-      // Now add transition and fade in
-      newImg.style.transition = 'opacity 0.4s ease-in-out';
-      
-      // Use requestAnimationFrame to ensure transition is applied
-      requestAnimationFrame(() => {
-        newImg.style.opacity = '1';
-      });
-      
-      // Remove old image after fade completes and reset container
-      setTimeout(() => {
-        if (currentImg && currentImg.parentNode) {
-          currentImg.remove();
-        }
-        // Reset container to auto sizing
-        imageContainer.style.width = 'auto';
-        imageContainer.style.height = 'auto';
-        imageContainer.style.transition = 'none';
-        // Make new image the main image (remove absolute positioning)
-        newImg.style.position = 'static';
-        newImg.style.top = 'auto';
-        newImg.style.left = 'auto';
-        newImg.style.right = 'auto';
-        newImg.style.bottom = 'auto';
-        newImg.style.margin = '0';
-      }, 400); // Match transition duration
-    };
-    
-    // If image loads from cache (instant), handle it the same way
-    if (newImg.complete) {
-      const newWidth = newImg.naturalWidth;
-      const newHeight = newImg.naturalHeight;
-      
-      // Calculate display dimensions respecting max constraints
-      const maxWidth = window.innerWidth - (46 * 3.7795275591); // 46mm to pixels
-      const maxHeight = window.innerHeight - (66 * 3.7795275591); // 66mm to pixels
-      
-      let displayWidth = newWidth;
-      let displayHeight = newHeight;
-      
-      if (displayWidth > maxWidth) {
-        displayHeight = (maxWidth / displayWidth) * displayHeight;
-        displayWidth = maxWidth;
-      }
-      if (displayHeight > maxHeight) {
-        displayWidth = (maxHeight / displayHeight) * displayWidth;
-        displayHeight = maxHeight;
-      }
-      
-      imageContainer.style.transition = 'width 0.4s ease-in-out, height 0.4s ease-in-out';
-      imageContainer.style.width = Math.round(displayWidth) + 'px';
-      imageContainer.style.height = Math.round(displayHeight) + 'px';
-      
-      void newImg.offsetHeight;
-      newImg.style.transition = 'opacity 0.4s ease-in-out';
-      requestAnimationFrame(() => {
-        newImg.style.opacity = '1';
-      });
-      setTimeout(() => {
-        if (currentImg && currentImg.parentNode) {
-          currentImg.remove();
-        }
-        imageContainer.style.width = 'auto';
-        imageContainer.style.height = 'auto';
-        imageContainer.style.transition = 'none';
-        newImg.style.position = 'static';
-        newImg.style.top = 'auto';
-        newImg.style.left = 'auto';
-        newImg.style.right = 'auto';
-        newImg.style.bottom = 'auto';
-        newImg.style.margin = '0';
-      }, 400);
-    }
-  }
-
-  // Update metadata with fade
-  const metadataContainer = document.querySelector('#lightbox .lightbox-scale-in .text-xs.space-y-2');
-  if (metadataContainer) {
-    // Fade out
-    metadataContainer.style.transition = 'opacity 0.2s ease-out';
-    metadataContainer.style.opacity = '0';
-    
-    // Update content after fade
-    setTimeout(() => {
-      metadataContainer.innerHTML = `
-        ${buildMetadataHTML(photo)}
-        ${photo.comment ? `<p class="text-white/50 italic font-light">${photo.comment}</p>` : ''}
-      `;
-      
-      // Fade in
-      metadataContainer.style.opacity = '1';
-    }, 200);
-  }
-
-  // Update arrow visibility based on position
+  // Update arrow visibility
   const leftArrow = document.getElementById('lightbox-prev');
   const rightArrow = document.getElementById('lightbox-next');
-  
-  if (leftArrow) {
-    if (currentIndex === 0) {
-      leftArrow.style.display = 'none';
-    } else {
-      leftArrow.style.display = 'block';
-    }
+  if (leftArrow) leftArrow.style.display = currentIndex > 0 ? 'block' : 'none';
+  if (rightArrow) rightArrow.style.display = currentIndex < photos.length - 1 ? 'block' : 'none';
+
+  // Update metadata
+  const meta = document.getElementById('lightbox-meta');
+  if (meta) {
+    meta.innerHTML = `${buildMetadataHTML(photo)}${photo.comment ? `<p class="text-white/50 italic font-light">${photo.comment}</p>` : ''}`;
   }
-  
-  if (rightArrow) {
-    if (currentIndex === photos.length - 1) {
-      rightArrow.style.display = 'none';
-    } else {
-      rightArrow.style.display = 'block';
-    }
-  }
+
+  // Update carousel slots (prev/current/next)
+  const prevSlot = document.querySelector('#lightbox .lightbox-slide[data-slot="prev"]');
+  const curSlot = document.querySelector('#lightbox .lightbox-slide[data-slot="current"]');
+  const nextSlot = document.querySelector('#lightbox .lightbox-slide[data-slot="next"]');
+  if (prevSlot) prevSlot.innerHTML = buildLightboxSlideHTML(photos[currentIndex - 1]);
+  if (curSlot) curSlot.innerHTML = buildLightboxSlideHTML(photo);
+  if (nextSlot) nextSlot.innerHTML = buildLightboxSlideHTML(photos[currentIndex + 1]);
+
+  // Reset track and preload neighbors
+  resetLightboxCarouselPosition();
+  preloadLightboxNeighbors(photos, currentIndex);
 }
 
 function renderLightbox() {
