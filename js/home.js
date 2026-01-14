@@ -350,6 +350,15 @@ function createLightbox(photos, currentIndex, onClose, onNavigate) {
         from { opacity: 0; transform: scale(0.95); }
         to { opacity: 1; transform: scale(1); }
       }
+      /* Smoothly handle orientation/viewport changes (prevents jumpy re-layout) */
+      .lightbox-content {
+        will-change: transform, opacity;
+        transition: transform 220ms ease, opacity 220ms ease;
+      }
+      #lightbox.rotating .lightbox-content {
+        transform: scale(0.985);
+        opacity: 0.88;
+      }
       /* Prevent pull-to-refresh and overscroll in lightbox */
       #lightbox {
         overscroll-behavior: contain;
@@ -375,7 +384,7 @@ function createLightbox(photos, currentIndex, onClose, onNavigate) {
     </div>
 
     <!-- Main content container -->
-    <div class="relative flex flex-col items-center justify-center w-full h-full lightbox-scale-in" style="padding: 15mm;">
+    <div class="lightbox-content relative flex flex-col items-center justify-center w-full h-full lightbox-scale-in" style="padding: 15mm;">
       <!-- Image with white frame (matted photo effect) -->
       <div class="lightbox-outer-frame relative bg-black flex items-center justify-center" style="padding: 5mm;">
         <div class="border border-white bg-black flex items-center justify-center" style="padding: 3mm;">
@@ -732,6 +741,29 @@ function createLightbox(photos, currentIndex, onClose, onNavigate) {
   // Add wheel listener for trackpad gestures
   lightbox.addEventListener('wheel', handleWheel, { passive: false });
 
+  // Mobile: make orientation/viewport changes feel smooth (avoid jumpy re-layout)
+  // We can't animate the OS rotation, but we can animate the lightbox content as the browser relayouts.
+  let rotateAnimTimer = null;
+  const triggerRotateAnim = () => {
+    lightbox.classList.add('rotating');
+    if (rotateAnimTimer) clearTimeout(rotateAnimTimer);
+    rotateAnimTimer = setTimeout(() => {
+      lightbox.classList.remove('rotating');
+    }, 230);
+  };
+
+  // orientationchange is inconsistent across browsers; resize/visualViewport catches most cases.
+  const handleWindowResize = () => triggerRotateAnim();
+  window.addEventListener('orientationchange', handleWindowResize, { passive: true });
+  window.addEventListener('resize', handleWindowResize, { passive: true });
+  lightbox._orientationResizeHandler = handleWindowResize;
+
+  if (window.visualViewport) {
+    const handleVVResize = () => triggerRotateAnim();
+    window.visualViewport.addEventListener('resize', handleVVResize, { passive: true });
+    lightbox._visualViewportResizeHandler = handleVVResize;
+  }
+
   // Handle body scroll based on device
   if (isMobileOrTablet()) {
     // On mobile: save scroll position and scroll to top
@@ -808,6 +840,15 @@ function closeLightbox() {
     // Clean up scroll prevention listener on mobile
     if (existingLightbox._scrollDownPreventer) {
       window.removeEventListener('scroll', existingLightbox._scrollDownPreventer);
+    }
+
+    // Clean up orientation/resize handlers
+    if (existingLightbox._orientationResizeHandler) {
+      window.removeEventListener('orientationchange', existingLightbox._orientationResizeHandler);
+      window.removeEventListener('resize', existingLightbox._orientationResizeHandler);
+    }
+    if (existingLightbox._visualViewportResizeHandler && window.visualViewport) {
+      window.visualViewport.removeEventListener('resize', existingLightbox._visualViewportResizeHandler);
     }
     
     // Clean up fullscreen change listener on mobile
