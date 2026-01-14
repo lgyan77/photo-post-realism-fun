@@ -353,7 +353,7 @@ function createLightbox(photos, currentIndex, onClose, onNavigate) {
       /* Smoothly handle orientation/viewport changes (prevents jumpy re-layout) */
       .lightbox-content {
         will-change: transform, opacity;
-        transition: transform 220ms ease, opacity 220ms ease;
+        transition: transform 420ms ease, opacity 420ms ease;
       }
       #lightbox.rotating .lightbox-content {
         transform: scale(0.985);
