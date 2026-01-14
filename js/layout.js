@@ -18,10 +18,12 @@ function detectDevice() {
   const isPhone = hasTouch && (width < PHONE_THRESHOLD || height < PHONE_THRESHOLD);
   
   if (!hasTouch) {
+    // Fallback for simulators: check both dimensions to catch landscape phones
+    const isMobileSize = width < PHONE_THRESHOLD || height < PHONE_THRESHOLD;
     return {
-      type: width < 768 ? 'desktop-small' : 'desktop',
-      useMobileLayout: width < 768,
-      isPortrait: false
+      type: isMobileSize ? 'desktop-small' : 'desktop',
+      useMobileLayout: isMobileSize,
+      isPortrait: height > width
     };
   }
   
@@ -29,7 +31,7 @@ function detectDevice() {
     const isPortrait = height > width;
     return {
       type: isPortrait ? 'phone-portrait' : 'phone-landscape',
-      useMobileLayout: width < 768, // For footer behavior
+      useMobileLayout: true, // Phones always use mobile layout (both orientations)
       isPortrait: isPortrait
     };
   }
@@ -37,7 +39,7 @@ function detectDevice() {
   // Tablet
   return {
     type: width < 1024 ? 'tablet-portrait' : 'tablet-landscape',
-    useMobileLayout: width < 1024,
+    useMobileLayout: false, // Tablets use desktop layout
     isPortrait: height > width
   };
 }
@@ -527,9 +529,10 @@ function updateFooterVisibility() {
   const footer = document.getElementById('main-footer');
   if (!footer) return;
   
-  // Only apply auto-hide on mobile (touch devices)
+  // Use cached device detection (properly set by detectDevice())
+  // Only apply auto-hide on phones (not tablets or desktop)
   if (!layoutState.isMobile) {
-    // On desktop, always show footer
+    // On desktop/tablet, always show footer
     footer.style.opacity = '1';
     if (layoutState.footerTimeout) {
       clearTimeout(layoutState.footerTimeout);
@@ -537,24 +540,21 @@ function updateFooterVisibility() {
     return;
   }
   
+  // On mobile: hide footer and set timeout to show after 10 seconds
   const currentScrollY = window.scrollY;
-  const isScrollingDown = currentScrollY > layoutState.lastScrollY;
-  const isScrollingUp = currentScrollY < layoutState.lastScrollY;
   
   // Clear any existing timeout
   if (layoutState.footerTimeout) {
     clearTimeout(layoutState.footerTimeout);
   }
   
-  if (isScrollingDown || isScrollingUp) {
-    // Hide footer immediately when scrolling
-    footer.style.opacity = '0';
-    
-    // Set timeout to show footer after 10 seconds of inactivity
-    layoutState.footerTimeout = setTimeout(() => {
-      footer.style.opacity = '1';
-    }, 10000);
-  }
+  // Hide footer on mobile (both when scrolling and when just becoming mobile)
+  footer.style.opacity = '0';
+  
+  // Set timeout to show footer after 10 seconds of inactivity
+  layoutState.footerTimeout = setTimeout(() => {
+    footer.style.opacity = '1';
+  }, 10000);
   
   layoutState.lastScrollY = currentScrollY;
 }
@@ -845,7 +845,7 @@ function initLayout() {
   body.insertBefore(header, body.firstChild);
   
   // Remove desktop navigation from DOM on phones (cleaner than hiding)
-  if (layoutState.device && (layoutState.device.type === 'phone-portrait' || layoutState.device.type === 'phone-landscape')) {
+  if (layoutState.isMobile) {
     const desktopNav = header.querySelector('.hidden.md\\:block');
     if (desktopNav) {
       desktopNav.remove();
@@ -885,6 +885,9 @@ function initLayout() {
     const device = applyDeviceClasses();
     layoutState.device = device;
     layoutState.isMobile = device.useMobileLayout;
+    
+    // Update footer visibility immediately after device change
+    updateFooterVisibility();
   });
 
   // Setup scroll buttons

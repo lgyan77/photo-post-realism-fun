@@ -269,7 +269,7 @@ function createPhotoSection(section, onPhotoClick) {
     imageContainer.style.width = 'auto';
 
     const img = document.createElement('img');
-    img.src = photo.url;
+    img.src = photo.thumb; // Use thumbnail (400px) for grid, not web version (2560px)
     img.alt = photo.title || `Photo ${index + 1}`;
     img.className = 'h-full w-auto object-cover transition-all duration-500 group-hover:scale-[1.02] group-hover:opacity-90';
     img.loading = 'lazy';
@@ -344,8 +344,19 @@ function createLightbox(photos, currentIndex, onClose, onNavigate) {
       }
       /* Prevent pull-to-refresh and overscroll in lightbox */
       #lightbox {
-        overscroll-behavior: contain;
+        overscroll-behavior: none;
         touch-action: manipulation;
+        overflow: hidden;
+        position: fixed;
+        height: 100vh;
+        width: 100vw;
+      }
+      /* Lock body scroll when lightbox is open */
+      body.lightbox-open {
+        overflow: hidden;
+        position: fixed;
+        width: 100%;
+        height: 100vh;
       }
       /* Mobile-specific sizing handled by device detection in layout.js */
     </style>
@@ -765,6 +776,7 @@ function closeLightbox() {
   }
   
   // Restore body scroll and overscroll behavior
+  document.body.classList.remove('lightbox-open');
   document.body.style.overflow = 'unset';
   document.body.style.overscrollBehavior = 'auto';
   document.documentElement.style.overscrollBehavior = 'auto';
@@ -994,6 +1006,9 @@ function renderLightbox() {
   );
 
   document.body.appendChild(lightbox);
+  
+  // Lock body scroll to prevent pull-down address bar on mobile
+  document.body.classList.add('lightbox-open');
 }
 
 // Main render function
