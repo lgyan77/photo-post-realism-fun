@@ -348,15 +348,13 @@ function createLightbox(photos, currentIndex, onClose, onNavigate) {
         touch-action: manipulation;
         overflow: hidden;
         position: fixed;
-        height: 100vh;
+        height: 100dvh; /* Use dynamic viewport height */
         width: 100vw;
       }
       /* Lock body scroll when lightbox is open */
       body.lightbox-open {
         overflow: hidden;
-        position: fixed;
-        width: 100%;
-        height: 100vh;
+        overscroll-behavior: none;
       }
       /* Mobile-specific sizing handled by device detection in layout.js */
     </style>
