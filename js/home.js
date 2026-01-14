@@ -315,6 +315,36 @@ function getImageUrl(photo) {
   return isMobileOrTablet() && photo.mobileUrl ? photo.mobileUrl : photo.url;
 }
 
+// Lightbox image preloading (neighbors)
+const lightboxPreloadCache = new Map(); // url -> HTMLImageElement
+
+function preloadImage(url) {
+  if (!url) return;
+  if (lightboxPreloadCache.has(url)) return;
+
+  const img = new Image();
+  img.decoding = 'async';
+  img.loading = 'eager';
+  img.src = url;
+  lightboxPreloadCache.set(url, img);
+
+  // Prevent unbounded growth if user scrolls a lot
+  if (lightboxPreloadCache.size > 30) {
+    const firstKey = lightboxPreloadCache.keys().next().value;
+    if (firstKey) lightboxPreloadCache.delete(firstKey);
+  }
+}
+
+function preloadLightboxNeighbors(photos, currentIndex) {
+  if (!Array.isArray(photos) || photos.length === 0) return;
+
+  const prev = photos[currentIndex - 1];
+  const next = photos[currentIndex + 1];
+
+  if (prev) preloadImage(getImageUrl(prev));
+  if (next) preloadImage(getImageUrl(next));
+}
+
 // Create Lightbox component (Enhanced from base44)
 function createLightbox(photos, currentIndex, onClose, onNavigate) {
   const lightbox = document.createElement('div');
@@ -1073,6 +1103,9 @@ function renderLightbox() {
   );
 
   document.body.appendChild(lightbox);
+
+  // Preload adjacent images so swipe feels instant
+  preloadLightboxNeighbors(currentSection.photos, state.lightbox.photoIndex);
   
   // Request fullscreen ONLY on actual mobile devices (not desktop, not simulators)
   const isActualMobile = isMobileOrTablet() && /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
