@@ -355,18 +355,6 @@ function createLightbox(photos, currentIndex, onClose, onNavigate) {
         overscroll-behavior: contain;
         touch-action: pan-x pan-y;
       }
-      /* Mobile: Account for Chrome's bottom UI bar */
-      @media (max-width: 768px) {
-        #lightbox .lightbox-scale-in {
-          /* Reduce padding at bottom, add margin at top to center adjusted content */
-          padding-bottom: 5mm !important;
-          padding-top: calc(15mm + 30px) !important;
-        }
-        #lightbox .lightbox-image {
-          /* Reduce max-height by 60px to account for bottom UI bar */
-          max-height: calc(100vh - 66mm - 60px) !important;
-        }
-      }
       /* Mobile-specific sizing handled by device detection in layout.js */
     </style>
 
@@ -822,6 +810,14 @@ function closeLightbox() {
       window.removeEventListener('scroll', existingLightbox._scrollDownPreventer);
     }
     
+    // Clean up fullscreen change listener on mobile
+    if (existingLightbox._fullscreenChangeHandler) {
+      document.removeEventListener('fullscreenchange', existingLightbox._fullscreenChangeHandler);
+      document.removeEventListener('webkitfullscreenchange', existingLightbox._fullscreenChangeHandler);
+      document.removeEventListener('mozfullscreenchange', existingLightbox._fullscreenChangeHandler);
+      document.removeEventListener('MSFullscreenChange', existingLightbox._fullscreenChangeHandler);
+    }
+    
     existingLightbox.remove();
   }
   
@@ -832,8 +828,23 @@ function closeLightbox() {
   document.body.style.overscrollBehavior = 'auto';
   document.documentElement.style.overscrollBehavior = 'auto';
   
+  // Exit fullscreen ONLY on actual mobile devices
+  const isActualMobile = isMobileOrTablet() && /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+  if (isActualMobile && (document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement)) {
+    if (document.exitFullscreen) {
+      document.exitFullscreen();
+    } else if (document.webkitExitFullscreen) { // Safari
+      document.webkitExitFullscreen();
+    } else if (document.mozCancelFullScreen) { // Firefox
+      document.mozCancelFullScreen();
+    } else if (document.msExitFullscreen) { // IE/Edge
+      document.msExitFullscreen();
+    }
+  }
+  
   // Restore scroll position on mobile
-  if (isMobileOrTablet() && savedScrollY > 0) {
+  const isActualMobileFinal = isMobileOrTablet() && /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+  if (isActualMobileFinal && savedScrollY > 0) {
     window.scrollTo({ top: savedScrollY, behavior: 'instant' });
   }
   
@@ -1062,6 +1073,45 @@ function renderLightbox() {
   );
 
   document.body.appendChild(lightbox);
+  
+  // Request fullscreen ONLY on actual mobile devices (not desktop, not simulators)
+  const isActualMobile = isMobileOrTablet() && /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+  if (isActualMobile) {
+    // Listen for fullscreen changes (user manually exits fullscreen)
+    const handleFullscreenChange = () => {
+      const isInFullscreen = document.fullscreenElement || document.webkitFullscreenElement || 
+                            document.mozFullScreenElement || document.msFullscreenElement;
+      
+      // If user exited fullscreen and lightbox is still open, close the lightbox
+      if (!isInFullscreen && state.lightbox.isOpen) {
+        closeLightbox();
+      }
+    };
+    
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+    document.addEventListener('mozfullscreenchange', handleFullscreenChange);
+    document.addEventListener('MSFullscreenChange', handleFullscreenChange);
+    
+    // Store reference for cleanup
+    lightbox._fullscreenChangeHandler = handleFullscreenChange;
+    
+    // Small delay to ensure lightbox is fully rendered
+    setTimeout(() => {
+      const elem = document.documentElement; // Request fullscreen for entire page
+      if (elem.requestFullscreen) {
+        elem.requestFullscreen().catch(err => {
+          console.log('Fullscreen request failed:', err);
+        });
+      } else if (elem.webkitRequestFullscreen) { // Safari
+        elem.webkitRequestFullscreen();
+      } else if (elem.mozRequestFullScreen) { // Firefox
+        elem.mozRequestFullScreen();
+      } else if (elem.msRequestFullscreen) { // IE/Edge
+        elem.msRequestFullscreen();
+      }
+    }, 50);
+  }
 }
 
 // Main render function
