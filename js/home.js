@@ -775,6 +775,16 @@ function closeLightbox() {
   
   // Restore body scroll and overscroll behavior
   document.body.classList.remove('lightbox-open');
+  
+  // Restore scroll position (reverse the aggressive lock)
+  const scrollY = document.body.dataset.scrollY;
+  document.body.style.position = '';
+  document.body.style.top = '';
+  document.body.style.width = '';
+  if (scrollY) {
+    window.scrollTo(0, parseInt(scrollY));
+  }
+  
   document.body.style.overflow = 'unset';
   document.body.style.overscrollBehavior = 'auto';
   document.documentElement.style.overscrollBehavior = 'auto';
@@ -1007,6 +1017,13 @@ function renderLightbox() {
   
   // Lock body scroll to prevent pull-down address bar on mobile
   document.body.classList.add('lightbox-open');
+  
+  // More aggressive scroll lock for mobile browsers
+  const scrollY = window.scrollY;
+  document.body.style.position = 'fixed';
+  document.body.style.top = `-${scrollY}px`;
+  document.body.style.width = '100%';
+  document.body.dataset.scrollY = scrollY;
 }
 
 // Main render function
