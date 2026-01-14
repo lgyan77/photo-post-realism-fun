@@ -587,14 +587,14 @@ function createLightbox(photos, currentIndex, onClose, onNavigate) {
   lightbox.addEventListener('touchmove', handleTouchMove, { passive: false });
   lightbox.addEventListener('touchend', handleTouchEnd, { passive: false });
 
-  // Mobile/Tablet: Swipe-down to close and pinch-to-close
+  // Mobile/Tablet: Swipe-down to close, swipe-up to hide address bar, and pinch-to-close
   let swipeDownStartY = 0;
   let initialPinchDistance = 0;
   
   const handleCloseGestures = (e) => {
     if (!isMobileOrTablet()) return;
     
-    // Swipe-down detection (single touch)
+    // Swipe detection (single touch)
     if (e.touches.length === 1) {
       swipeDownStartY = e.touches[0].clientY;
       initialPinchDistance = 0;
@@ -634,14 +634,18 @@ function createLightbox(photos, currentIndex, onClose, onNavigate) {
   const handleCloseGesturesEnd = (e) => {
     if (!isMobileOrTablet()) return;
     
-    // Check for swipe-down (vertical swipe down by >100px)
+    // Check for vertical swipe
     if (swipeDownStartY > 0 && e.changedTouches.length === 1) {
-      const swipeDownEndY = e.changedTouches[0].clientY;
-      const deltaY = swipeDownEndY - swipeDownStartY;
+      const swipeEndY = e.changedTouches[0].clientY;
+      const deltaY = swipeEndY - swipeDownStartY;
       
-      // Swipe down (not up) and significant distance
+      // Swipe DOWN (>100px) - close lightbox
       if (deltaY > 100) {
         onClose();
+      }
+      // Swipe UP (>50px) - hide address bar by scrolling to top
+      else if (deltaY < -50) {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
       }
     }
     
@@ -650,7 +654,10 @@ function createLightbox(photos, currentIndex, onClose, onNavigate) {
     initialPinchDistance = 0;
   };
   
-  // Add close gesture listeners
+  // Add close gesture listeners (works on both image and background)
+  // Swipe DOWN: Close lightbox
+  // Swipe UP: Hide address bar by scrolling to top
+  // Pinch IN: Close lightbox
   lightbox.addEventListener('touchstart', handleCloseGestures, { passive: true });
   lightbox.addEventListener('touchmove', handleCloseGesturesMove, { passive: true });
   lightbox.addEventListener('touchend', handleCloseGesturesEnd, { passive: true });
