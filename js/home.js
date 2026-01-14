@@ -323,8 +323,7 @@ function createLightbox(photos, currentIndex, onClose, onNavigate) {
   
   // Ensure lightbox covers entire screen on mobile Chrome (prevent white line at bottom)
   if (isMobileOrTablet()) {
-    lightbox.style.height = '100dvh';
-    lightbox.style.minHeight = '100vh';
+    lightbox.style.cssText += 'height: 100dvh; min-height: 100vh; top: 0; bottom: 0; left: 0; right: 0;';
   }
 
   const photo = photos[currentIndex];
@@ -360,15 +359,23 @@ function createLightbox(photos, currentIndex, onClose, onNavigate) {
         overscroll-behavior: contain;
         touch-action: pan-x pan-y;
         /* Extend lightbox to cover any UI gaps on mobile Chrome */
+        width: 100vw;
+        height: 100vh;
+        height: 100dvh; /* Dynamic viewport height for mobile */
         min-height: 100vh;
-        min-height: 100dvh; /* Dynamic viewport height for mobile */
-        padding-bottom: env(safe-area-inset-bottom, 0); /* Cover notch area */
+        min-height: 100dvh;
       }
       /* Mobile-specific: Ensure full coverage including bottom UI */
       @media (max-width: 768px) {
         #lightbox {
-          /* Extend beyond viewport to cover any white gaps */
-          bottom: -1px !important;
+          /* Force absolute positioning to cover everything */
+          position: fixed !important;
+          top: 0 !important;
+          left: 0 !important;
+          right: 0 !important;
+          bottom: 0 !important;
+          width: 100% !important;
+          height: 100% !important;
         }
       }
       /* Mobile-specific sizing handled by device detection in layout.js */
@@ -766,6 +773,10 @@ function createLightbox(photos, currentIndex, onClose, onNavigate) {
     window.addEventListener('scroll', preventScrollDown, { passive: true });
     lightbox._scrollDownPreventer = preventScrollDown;
     
+    // Set html background to black to prevent white line (doesn't affect centering)
+    lightbox.dataset.savedHtmlBg = document.documentElement.style.backgroundColor || '';
+    document.documentElement.style.backgroundColor = 'black';
+    
     document.body.style.overflow = 'auto';
   } else {
     // On desktop: prevent all scrolling
@@ -811,10 +822,12 @@ function closeLightbox() {
   // Remove keyboard listener and lightbox
   const existingLightbox = document.getElementById('lightbox');
   let savedScrollY = 0;
+  let savedHtmlBg = '';
   
   if (existingLightbox) {
-    // Get saved scroll position before removing
+    // Get saved scroll position and html background before removing
     savedScrollY = parseInt(existingLightbox.dataset.savedScrollY || '0', 10);
+    savedHtmlBg = existingLightbox.dataset.savedHtmlBg || '';
     
     // Clean up popstate listener if it exists
     if (existingLightbox._popStateHandler) {
@@ -835,6 +848,11 @@ function closeLightbox() {
   }
   document.body.style.overscrollBehavior = 'auto';
   document.documentElement.style.overscrollBehavior = 'auto';
+  
+  // Restore html background color on mobile
+  if (isMobileOrTablet() && savedHtmlBg !== undefined) {
+    document.documentElement.style.backgroundColor = savedHtmlBg;
+  }
   
   // Restore scroll position on mobile
   if (isMobileOrTablet() && savedScrollY > 0) {
