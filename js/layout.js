@@ -986,6 +986,16 @@ function initLayout() {
     }, { passive: true });
   }
   
+  // Close mobile sections menu when user scrolls the page
+  let lastScrollY = window.scrollY;
+  window.addEventListener('scroll', () => {
+    // Only close if menu is open AND scroll position changed
+    if (layoutState.mobileSectionsOpen && Math.abs(window.scrollY - lastScrollY) > 5) {
+      closeMobileSectionsMenu();
+    }
+    lastScrollY = window.scrollY;
+  }, { passive: true });
+  
   // Setup bottom collapse bar
   if (mobileSectionsBarBottom) {
     // Click/tap to close

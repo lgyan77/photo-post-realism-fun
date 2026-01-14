@@ -320,6 +320,12 @@ function createLightbox(photos, currentIndex, onClose, onNavigate) {
   const lightbox = document.createElement('div');
   lightbox.className = 'fixed inset-0 z-50 bg-black flex items-center justify-center lightbox-fade-in';
   lightbox.id = 'lightbox';
+  
+  // Ensure lightbox covers entire screen on mobile Chrome (prevent white line at bottom)
+  if (isMobileOrTablet()) {
+    lightbox.style.height = '100dvh';
+    lightbox.style.minHeight = '100vh';
+  }
 
   const photo = photos[currentIndex];
 
@@ -353,6 +359,17 @@ function createLightbox(photos, currentIndex, onClose, onNavigate) {
       #lightbox {
         overscroll-behavior: contain;
         touch-action: pan-x pan-y;
+        /* Extend lightbox to cover any UI gaps on mobile Chrome */
+        min-height: 100vh;
+        min-height: 100dvh; /* Dynamic viewport height for mobile */
+        padding-bottom: env(safe-area-inset-bottom, 0); /* Cover notch area */
+      }
+      /* Mobile-specific: Ensure full coverage including bottom UI */
+      @media (max-width: 768px) {
+        #lightbox {
+          /* Extend beyond viewport to cover any white gaps */
+          bottom: -1px !important;
+        }
       }
       /* Mobile-specific sizing handled by device detection in layout.js */
     </style>
