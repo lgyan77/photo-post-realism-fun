@@ -321,13 +321,13 @@ function buildLightboxSlideHTML(photo) {
   }
 
   return `
-    <div class="lightbox-outer-frame relative bg-black flex items-center justify-center" style="padding: 5mm;">
+    <div class="lightbox-outer-frame relative bg-black flex items-center justify-center" style="padding: 0mm;">
       <div class="border border-white bg-black flex items-center justify-center" style="padding: 3mm;">
         <img
           src="${getImageUrl(photo)}"
           alt="${photo.title || 'Photo'}"
           class="block lightbox-image"
-          style="max-width: calc(100vw - 46mm); max-height: calc(100vh - 66mm); width: auto; height: auto;"
+          style="max-width: var(--lb-max-w, calc(100vw - 46mm)) !important; max-height: var(--lb-max-h, calc(100vh - 66mm)) !important; width: auto; height: auto;"
         />
       </div>
     </div>
@@ -336,6 +336,37 @@ function buildLightboxSlideHTML(photo) {
 
 // Lightbox image preloading (neighbors)
 const lightboxPreloadCache = new Map(); // url -> HTMLImageElement
+
+function applyLightboxSizing(lightbox) {
+  if (!lightbox) return;
+
+  const content = lightbox.querySelector('.lightbox-content');
+
+  // Spec:
+  // - 3mm from screen edge to WHITE FRAME (outer border)
+  // - 3mm inside the frame from border to image (the mat), implemented in HTML as padding: 3mm
+  const EDGE_MM = 3;
+  const INNER_MM = 3;
+  const BORDER_PX = 1; // approx for Tailwind `border` (1px)
+  const MM_TO_PX = 96 / 25.4;
+
+  const vv = window.visualViewport;
+  const viewportW = vv ? vv.width : window.innerWidth;
+  const viewportH = vv ? vv.height : window.innerHeight;
+
+  const subtractPx = 2 * (EDGE_MM + INNER_MM) * MM_TO_PX + 2 * BORDER_PX;
+  const maxW = Math.max(0, Math.floor(viewportW - subtractPx));
+  const maxH = Math.max(0, Math.floor(viewportH - subtractPx));
+
+  // Put values on the lightbox so all slide images inherit them
+  lightbox.style.setProperty('--lb-max-w', `${maxW}px`);
+  lightbox.style.setProperty('--lb-max-h', `${maxH}px`);
+
+  // Ensure the container doesn't add extra padding on phones (layout.js may also override)
+  if (content) {
+    content.style.padding = isMobileOrTablet() ? '3mm' : '15mm';
+  }
+}
 
 function preloadImage(url) {
   if (!url) return;
@@ -373,12 +404,22 @@ function resetLightboxCarouselPosition() {
 
   const gap = getComputedStyle(track).gap || '0px';
   const gapPx = Number.isFinite(parseFloat(gap)) ? parseFloat(gap) : 0;
-  const step = carousel.clientWidth + gapPx;
+  const slideWidth = carousel.clientWidth;
+  track.querySelectorAll('.lightbox-slide').forEach((slide) => {
+    slide.style.width = `${slideWidth}px`;
+  });
+  const step = slideWidth + gapPx;
 
   track.style.transition = 'none';
   track.style.transform = `translate3d(${-step}px, 0, 0)`;
   void track.offsetHeight;
   track.style.transition = '';
+
+  // Keep any live carousel state in sync
+  if (lightbox._carouselState) {
+    lightbox._carouselState.step = step;
+    lightbox._carouselState.baseX = -step;
+  }
 
   // Store for optional debugging/usage
   lightbox._carouselStep = step;
@@ -411,6 +452,9 @@ function createLightbox(photos, currentIndex, onClose, onNavigate) {
       .lightbox-arrow.visible {
         opacity: 1;
       }
+      .lightbox-content {
+        box-sizing: border-box; /* prevents w-full/h-full + padding from overflowing & getting clipped */
+      }
       @keyframes lightboxFadeIn {
         from { opacity: 0; }
         to { opacity: 1; }
@@ -429,6 +473,12 @@ function createLightbox(photos, currentIndex, onClose, onNavigate) {
         width: 100%;
         overflow: hidden;
         touch-action: pan-y; /* allow vertical gestures, horizontal handled manually */
+        flex: 1 1 auto;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 0; /* allow shrinking in flex column */
+        /* Clearance is handled by layout.js on phones via .lightbox-scale-in { padding: 3mm } */
       }
       #lightbox .lightbox-track {
         display: flex;
@@ -437,10 +487,17 @@ function createLightbox(photos, currentIndex, onClose, onNavigate) {
         will-change: transform;
         transform: translate3d(0, 0, 0);
       }
+      @media (orientation: landscape) {
+        /* Reduce gap by ~1/3 in landscape */
+        #lightbox .lightbox-track {
+          gap: clamp(10px, 2vw, 18px);
+        }
+      }
       #lightbox .lightbox-slide {
-        flex: 0 0 100%;
+        flex: 0 0 auto; /* width is set in JS to match carousel viewport */
         display: flex;
         justify-content: center;
+        align-items: center;
       }
       #lightbox .lightbox-slide-empty {
         width: 100%;
@@ -466,7 +523,7 @@ function createLightbox(photos, currentIndex, onClose, onNavigate) {
     </div>
 
     <!-- Main content container -->
-    <div class="lightbox-content relative flex flex-col items-center justify-center w-full h-full lightbox-scale-in" style="padding: 15mm;">
+    <div class="lightbox-content relative flex flex-col items-center justify-center w-full h-full lightbox-scale-in">
       <!-- Film-strip carousel -->
       <div class="lightbox-carousel" id="lightbox-carousel">
         <div class="lightbox-track" id="lightbox-track">
@@ -565,6 +622,8 @@ function createLightbox(photos, currentIndex, onClose, onNavigate) {
     lastDX: 0,
     animating: false
   };
+  // Expose so updateLightboxContent can keep step/baseX in sync after navigation
+  lightbox._carouselState = carouselState;
 
   const getGapPx = () => {
     if (!track) return 0;
@@ -575,7 +634,15 @@ function createLightbox(photos, currentIndex, onClose, onNavigate) {
 
   const recalcCarouselStep = () => {
     if (!carousel || !track) return;
-    carouselState.step = carousel.clientWidth + getGapPx();
+    const gapPx = getGapPx();
+    const slideWidth = carousel.clientWidth;
+
+    // Force each slide to match the carousel viewport width (prevents "only edge visible")
+    track.querySelectorAll('.lightbox-slide').forEach((slide) => {
+      slide.style.width = `${slideWidth}px`;
+    });
+
+    carouselState.step = slideWidth + gapPx;
     carouselState.baseX = -carouselState.step;
     track.style.transition = 'none';
     track.style.transform = `translate3d(${carouselState.baseX}px, 0, 0)`;
@@ -721,6 +788,19 @@ function createLightbox(photos, currentIndex, onClose, onNavigate) {
     window.addEventListener('orientationchange', handleResize, { passive: true });
     lightbox._carouselResizeHandler = handleResize;
   }
+
+  // Apply precise sizing for the "3mm to white frame" spec (uses visualViewport when available)
+  const handleSizing = () => applyLightboxSizing(lightbox);
+  window.addEventListener('resize', handleSizing, { passive: true });
+  window.addEventListener('orientationchange', handleSizing, { passive: true });
+  lightbox._lbSizingHandler = handleSizing;
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener('resize', handleSizing, { passive: true });
+    window.visualViewport.addEventListener('scroll', handleSizing, { passive: true });
+    lightbox._lbVisualViewportHandler = handleSizing;
+  }
+  // Initial sizing (next frame to ensure layout is ready)
+  requestAnimationFrame(handleSizing);
 
   // Mobile/Tablet: Swipe-down to close, swipe-up to hide address bar, and pinch-to-close
   let swipeDownStartY = 0;
@@ -948,6 +1028,16 @@ function closeLightbox() {
     if (existingLightbox._carouselResizeHandler) {
       window.removeEventListener('resize', existingLightbox._carouselResizeHandler);
       window.removeEventListener('orientationchange', existingLightbox._carouselResizeHandler);
+    }
+
+    // Clean up lightbox sizing handlers
+    if (existingLightbox._lbSizingHandler) {
+      window.removeEventListener('resize', existingLightbox._lbSizingHandler);
+      window.removeEventListener('orientationchange', existingLightbox._lbSizingHandler);
+    }
+    if (existingLightbox._lbVisualViewportHandler && window.visualViewport) {
+      window.visualViewport.removeEventListener('resize', existingLightbox._lbVisualViewportHandler);
+      window.visualViewport.removeEventListener('scroll', existingLightbox._lbVisualViewportHandler);
     }
 
     // Clean up fullscreen change listener on mobile
