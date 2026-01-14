@@ -748,6 +748,22 @@ function createLightbox(photos, currentIndex, onClose, onNavigate) {
     lightbox.dataset.popStateHandler = 'attached';
     lightbox._popStateHandler = handlePopState;
   }
+  
+  // Aggressive prevention of pull-down/overscroll on lightbox background
+  // This prevents address bar from appearing when pulling down
+  lightbox.addEventListener('touchmove', (e) => {
+    // Only allow touchmove on the image and navigation arrows
+    const target = e.target;
+    const isImage = target.tagName === 'IMG' || target.classList.contains('lightbox-image');
+    const isArrow = target.closest('.lightbox-arrow') || target.closest('button[id*="arrow"]');
+    const isCloseBtn = target.closest('#lightbox-close');
+    
+    // Allow touch on interactive elements, prevent on background
+    if (!isImage && !isArrow && !isCloseBtn) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+  }, { passive: false });
 
   return lightbox;
 }
@@ -775,6 +791,13 @@ function closeLightbox() {
   
   // Restore body scroll and overscroll behavior
   document.body.classList.remove('lightbox-open');
+  
+  // Remove document-level touch preventer
+  if (document._lightboxTouchPreventer) {
+    document.removeEventListener('touchmove', document._lightboxTouchPreventer);
+    delete document._lightboxTouchPreventer;
+    delete document.dataset.lightboxTouchPreventer;
+  }
   
   // Restore scroll position (reverse the aggressive lock)
   const scrollY = document.body.dataset.scrollY;
@@ -1024,6 +1047,18 @@ function renderLightbox() {
   document.body.style.top = `-${scrollY}px`;
   document.body.style.width = '100%';
   document.body.dataset.scrollY = scrollY;
+  
+  // Prevent touchmove on document to block pull-to-refresh and address bar reveal
+  const preventTouch = (e) => {
+    if (e.target.closest('#lightbox')) {
+      // Let lightbox handle its own touch events
+      return;
+    }
+    e.preventDefault();
+  };
+  document.addEventListener('touchmove', preventTouch, { passive: false });
+  document.dataset.lightboxTouchPreventer = 'attached';
+  document._lightboxTouchPreventer = preventTouch;
 }
 
 // Main render function
