@@ -321,10 +321,6 @@ function createLightbox(photos, currentIndex, onClose, onNavigate) {
   lightbox.className = 'fixed inset-0 z-50 bg-black flex items-center justify-center lightbox-fade-in';
   lightbox.id = 'lightbox';
   
-  // Ensure lightbox covers entire screen on mobile Chrome (prevent white line at bottom)
-  if (isMobileOrTablet()) {
-    lightbox.style.cssText += 'height: 100dvh; min-height: 100vh; top: 0; bottom: 0; left: 0; right: 0;';
-  }
 
   const photo = photos[currentIndex];
 
@@ -358,25 +354,6 @@ function createLightbox(photos, currentIndex, onClose, onNavigate) {
       #lightbox {
         overscroll-behavior: contain;
         touch-action: pan-x pan-y;
-        /* Extend lightbox to cover any UI gaps on mobile Chrome */
-        width: 100vw;
-        height: 100vh;
-        height: 100dvh; /* Dynamic viewport height for mobile */
-        min-height: 100vh;
-        min-height: 100dvh;
-      }
-      /* Mobile-specific: Ensure full coverage including bottom UI */
-      @media (max-width: 768px) {
-        #lightbox {
-          /* Force absolute positioning to cover everything */
-          position: fixed !important;
-          top: 0 !important;
-          left: 0 !important;
-          right: 0 !important;
-          bottom: 0 !important;
-          width: 100% !important;
-          height: 100% !important;
-        }
       }
       /* Mobile-specific sizing handled by device detection in layout.js */
     </style>
@@ -773,10 +750,6 @@ function createLightbox(photos, currentIndex, onClose, onNavigate) {
     window.addEventListener('scroll', preventScrollDown, { passive: true });
     lightbox._scrollDownPreventer = preventScrollDown;
     
-    // Set html background to black to prevent white line (doesn't affect centering)
-    lightbox.dataset.savedHtmlBg = document.documentElement.style.backgroundColor || '';
-    document.documentElement.style.backgroundColor = 'black';
-    
     document.body.style.overflow = 'auto';
   } else {
     // On desktop: prevent all scrolling
@@ -822,12 +795,10 @@ function closeLightbox() {
   // Remove keyboard listener and lightbox
   const existingLightbox = document.getElementById('lightbox');
   let savedScrollY = 0;
-  let savedHtmlBg = '';
   
   if (existingLightbox) {
-    // Get saved scroll position and html background before removing
+    // Get saved scroll position before removing
     savedScrollY = parseInt(existingLightbox.dataset.savedScrollY || '0', 10);
-    savedHtmlBg = existingLightbox.dataset.savedHtmlBg || '';
     
     // Clean up popstate listener if it exists
     if (existingLightbox._popStateHandler) {
@@ -837,6 +808,14 @@ function closeLightbox() {
     // Clean up scroll prevention listener on mobile
     if (existingLightbox._scrollDownPreventer) {
       window.removeEventListener('scroll', existingLightbox._scrollDownPreventer);
+    }
+    
+    // Clean up fullscreen change listener on mobile
+    if (existingLightbox._fullscreenChangeHandler) {
+      document.removeEventListener('fullscreenchange', existingLightbox._fullscreenChangeHandler);
+      document.removeEventListener('webkitfullscreenchange', existingLightbox._fullscreenChangeHandler);
+      document.removeEventListener('mozfullscreenchange', existingLightbox._fullscreenChangeHandler);
+      document.removeEventListener('MSFullscreenChange', existingLightbox._fullscreenChangeHandler);
     }
     
     existingLightbox.remove();
@@ -849,13 +828,23 @@ function closeLightbox() {
   document.body.style.overscrollBehavior = 'auto';
   document.documentElement.style.overscrollBehavior = 'auto';
   
-  // Restore html background color on mobile
-  if (isMobileOrTablet() && savedHtmlBg !== undefined) {
-    document.documentElement.style.backgroundColor = savedHtmlBg;
+  // Exit fullscreen ONLY on actual mobile devices
+  const isActualMobile = isMobileOrTablet() && /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+  if (isActualMobile && (document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement)) {
+    if (document.exitFullscreen) {
+      document.exitFullscreen();
+    } else if (document.webkitExitFullscreen) { // Safari
+      document.webkitExitFullscreen();
+    } else if (document.mozCancelFullScreen) { // Firefox
+      document.mozCancelFullScreen();
+    } else if (document.msExitFullscreen) { // IE/Edge
+      document.msExitFullscreen();
+    }
   }
   
   // Restore scroll position on mobile
-  if (isMobileOrTablet() && savedScrollY > 0) {
+  const isActualMobileFinal = isMobileOrTablet() && /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+  if (isActualMobileFinal && savedScrollY > 0) {
     window.scrollTo({ top: savedScrollY, behavior: 'instant' });
   }
   
@@ -1084,6 +1073,45 @@ function renderLightbox() {
   );
 
   document.body.appendChild(lightbox);
+  
+  // Request fullscreen ONLY on actual mobile devices (not desktop, not simulators)
+  const isActualMobile = isMobileOrTablet() && /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+  if (isActualMobile) {
+    // Listen for fullscreen changes (user manually exits fullscreen)
+    const handleFullscreenChange = () => {
+      const isInFullscreen = document.fullscreenElement || document.webkitFullscreenElement || 
+                            document.mozFullScreenElement || document.msFullscreenElement;
+      
+      // If user exited fullscreen and lightbox is still open, close the lightbox
+      if (!isInFullscreen && state.lightbox.isOpen) {
+        closeLightbox();
+      }
+    };
+    
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+    document.addEventListener('mozfullscreenchange', handleFullscreenChange);
+    document.addEventListener('MSFullscreenChange', handleFullscreenChange);
+    
+    // Store reference for cleanup
+    lightbox._fullscreenChangeHandler = handleFullscreenChange;
+    
+    // Small delay to ensure lightbox is fully rendered
+    setTimeout(() => {
+      const elem = document.documentElement; // Request fullscreen for entire page
+      if (elem.requestFullscreen) {
+        elem.requestFullscreen().catch(err => {
+          console.log('Fullscreen request failed:', err);
+        });
+      } else if (elem.webkitRequestFullscreen) { // Safari
+        elem.webkitRequestFullscreen();
+      } else if (elem.mozRequestFullScreen) { // Firefox
+        elem.mozRequestFullScreen();
+      } else if (elem.msRequestFullscreen) { // IE/Edge
+        elem.msRequestFullscreen();
+      }
+    }, 50);
+  }
 }
 
 // Main render function
