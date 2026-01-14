@@ -645,6 +645,8 @@ function createLightbox(photos, currentIndex, onClose, onNavigate) {
       }
       // Swipe UP (>50px) - hide address bar by scrolling to top
       else if (deltaY < -50) {
+        // Scroll page to top (triggers address bar to hide)
+        // This works because body is scrollable on mobile
         window.scrollTo({ top: 0, behavior: 'smooth' });
       }
     }
@@ -729,8 +731,11 @@ function createLightbox(photos, currentIndex, onClose, onNavigate) {
   // Add wheel listener for trackpad gestures
   lightbox.addEventListener('wheel', handleWheel, { passive: false });
 
-  // Prevent body scroll when lightbox is open
-  document.body.style.overflow = 'hidden';
+  // Prevent body scroll when lightbox is open (desktop only)
+  // On mobile, we need body to be scrollable to control the address bar
+  if (!isMobileOrTablet()) {
+    document.body.style.overflow = 'hidden';
+  }
   document.body.style.overscrollBehavior = 'none';
   document.documentElement.style.overscrollBehavior = 'none';
   
@@ -779,7 +784,9 @@ function closeLightbox() {
   }
   
   // Restore body scroll and overscroll behavior
-  document.body.style.overflow = 'unset';
+  if (!isMobileOrTablet()) {
+    document.body.style.overflow = 'unset';
+  }
   document.body.style.overscrollBehavior = 'auto';
   document.documentElement.style.overscrollBehavior = 'auto';
   
