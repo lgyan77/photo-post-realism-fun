@@ -8,6 +8,7 @@
         {
           "id": "zion-utah-usa-1",
           "url": "images/web/zion-utah-usa/OMD0056-9-2.jpg",
+          "mobileUrl": "images/mobile/zion-utah-usa/OMD0056-9-2.jpg",
           "thumb": "images/thumbs/zion-utah-usa/OMD0056-9-2.jpg",
           "width": 2560,
           "height": 2239,
@@ -16,6 +17,7 @@
         {
           "id": "zion-utah-usa-2",
           "url": "images/web/zion-utah-usa/OMD0096-2.jpg",
+          "mobileUrl": "images/mobile/zion-utah-usa/OMD0096-2.jpg",
           "thumb": "images/thumbs/zion-utah-usa/OMD0096-2.jpg",
           "width": 2560,
           "height": 1920,
@@ -24,6 +26,7 @@
         {
           "id": "zion-utah-usa-3",
           "url": "images/web/zion-utah-usa/OMD0100-2.jpg",
+          "mobileUrl": "images/mobile/zion-utah-usa/OMD0100-2.jpg",
           "thumb": "images/thumbs/zion-utah-usa/OMD0100-2.jpg",
           "width": 1920,
           "height": 2560,
@@ -32,6 +35,7 @@
         {
           "id": "zion-utah-usa-4",
           "url": "images/web/zion-utah-usa/OMD0165-2.jpg",
+          "mobileUrl": "images/mobile/zion-utah-usa/OMD0165-2.jpg",
           "thumb": "images/thumbs/zion-utah-usa/OMD0165-2.jpg",
           "width": 2145,
           "height": 2560,
@@ -40,6 +44,7 @@
         {
           "id": "zion-utah-usa-5",
           "url": "images/web/zion-utah-usa/OMD0201-2.jpg",
+          "mobileUrl": "images/mobile/zion-utah-usa/OMD0201-2.jpg",
           "thumb": "images/thumbs/zion-utah-usa/OMD0201-2.jpg",
           "width": 2560,
           "height": 1920,
@@ -48,6 +53,7 @@
         {
           "id": "zion-utah-usa-6",
           "url": "images/web/zion-utah-usa/OMD0232-12-2.jpg",
+          "mobileUrl": "images/mobile/zion-utah-usa/OMD0232-12-2.jpg",
           "thumb": "images/thumbs/zion-utah-usa/OMD0232-12-2.jpg",
           "width": 2560,
           "height": 1694,
@@ -56,6 +62,7 @@
         {
           "id": "zion-utah-usa-7",
           "url": "images/web/zion-utah-usa/OMD0236-fin.jpg",
+          "mobileUrl": "images/mobile/zion-utah-usa/OMD0236-fin.jpg",
           "thumb": "images/thumbs/zion-utah-usa/OMD0236-fin.jpg",
           "width": 1920,
           "height": 2560,
@@ -64,6 +71,7 @@
         {
           "id": "zion-utah-usa-8",
           "url": "images/web/zion-utah-usa/OMD0244-16-2-3.jpg",
+          "mobileUrl": "images/mobile/zion-utah-usa/OMD0244-16-2-3.jpg",
           "thumb": "images/thumbs/zion-utah-usa/OMD0244-16-2-3.jpg",
           "width": 2560,
           "height": 1494,
@@ -72,6 +80,7 @@
         {
           "id": "zion-utah-usa-9",
           "url": "images/web/zion-utah-usa/OMD0244-16-2-4.jpg",
+          "mobileUrl": "images/mobile/zion-utah-usa/OMD0244-16-2-4.jpg",
           "thumb": "images/thumbs/zion-utah-usa/OMD0244-16-2-4.jpg",
           "width": 2560,
           "height": 1494,
@@ -80,6 +89,7 @@
         {
           "id": "zion-utah-usa-10",
           "url": "images/web/zion-utah-usa/OMD0244-16-2-6.jpg",
+          "mobileUrl": "images/mobile/zion-utah-usa/OMD0244-16-2-6.jpg",
           "thumb": "images/thumbs/zion-utah-usa/OMD0244-16-2-6.jpg",
           "width": 2560,
           "height": 1494,
@@ -88,6 +98,7 @@
         {
           "id": "zion-utah-usa-11",
           "url": "images/web/zion-utah-usa/OMD0266-2-3.jpg",
+          "mobileUrl": "images/mobile/zion-utah-usa/OMD0266-2-3.jpg",
           "thumb": "images/thumbs/zion-utah-usa/OMD0266-2-3.jpg",
           "width": 2560,
           "height": 1702,
@@ -96,6 +107,7 @@
         {
           "id": "zion-utah-usa-12",
           "url": "images/web/zion-utah-usa/OMD0285-2-2.jpg",
+          "mobileUrl": "images/mobile/zion-utah-usa/OMD0285-2-2.jpg",
           "thumb": "images/thumbs/zion-utah-usa/OMD0285-2-2.jpg",
           "width": 2560,
           "height": 1920,
@@ -111,6 +123,7 @@
         {
           "id": "st-anton-tyrol-austria-1",
           "url": "images/web/st-anton-tyrol-austria/1.2025-12-17 11.24.12-1-2.jpg",
+          "mobileUrl": "images/mobile/st-anton-tyrol-austria/1.2025-12-17 11.24.12-1-2.jpg",
           "thumb": "images/thumbs/st-anton-tyrol-austria/1.2025-12-17 11.24.12-1-2.jpg",
           "width": 2560,
           "height": 1485,
@@ -119,6 +132,7 @@
         {
           "id": "st-anton-tyrol-austria-2",
           "url": "images/web/st-anton-tyrol-austria/2.2025-12-18 08.20.11-5-15-2.jpg",
+          "mobileUrl": "images/mobile/st-anton-tyrol-austria/2.2025-12-18 08.20.11-5-15-2.jpg",
           "thumb": "images/thumbs/st-anton-tyrol-austria/2.2025-12-18 08.20.11-5-15-2.jpg",
           "width": 2173,
           "height": 1244,
@@ -127,6 +141,7 @@
         {
           "id": "st-anton-tyrol-austria-3",
           "url": "images/web/st-anton-tyrol-austria/3.2025-12-19 13.53.57-2-2.jpg",
+          "mobileUrl": "images/mobile/st-anton-tyrol-austria/3.2025-12-19 13.53.57-2-2.jpg",
           "thumb": "images/thumbs/st-anton-tyrol-austria/3.2025-12-19 13.53.57-2-2.jpg",
           "width": 2560,
           "height": 1789,

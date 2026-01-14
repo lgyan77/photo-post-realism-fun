@@ -308,6 +308,13 @@ function isMobileOrTablet() {
   return 'ontouchstart' in window || navigator.maxTouchPoints > 0;
 }
 
+// Get appropriate image URL based on device (mobile or desktop)
+function getImageUrl(photo) {
+  // Use mobile images (1280px, ~300KB) on phones/tablets for faster loading
+  // Use web images (2560px, ~1.2MB) on desktop for quality
+  return isMobileOrTablet() && photo.mobileUrl ? photo.mobileUrl : photo.url;
+}
+
 // Create Lightbox component (Enhanced from base44)
 function createLightbox(photos, currentIndex, onClose, onNavigate) {
   const lightbox = document.createElement('div');
@@ -344,17 +351,8 @@ function createLightbox(photos, currentIndex, onClose, onNavigate) {
       }
       /* Prevent pull-to-refresh and overscroll in lightbox */
       #lightbox {
-        overscroll-behavior: none;
-        touch-action: manipulation;
-        overflow: hidden;
-        position: fixed;
-        height: 100dvh; /* Use dynamic viewport height */
-        width: 100vw;
-      }
-      /* Lock body scroll when lightbox is open */
-      body.lightbox-open {
-        overflow: hidden;
-        overscroll-behavior: none;
+        overscroll-behavior: contain;
+        touch-action: pan-x pan-y;
       }
       /* Mobile-specific sizing handled by device detection in layout.js */
     </style>
@@ -381,7 +379,7 @@ function createLightbox(photos, currentIndex, onClose, onNavigate) {
       <div class="lightbox-outer-frame relative bg-black flex items-center justify-center" style="padding: 5mm;">
         <div class="border border-white bg-black flex items-center justify-center" style="padding: 3mm;">
           <img
-            src="${photo.url}"
+            src="${getImageUrl(photo)}"
             alt="${photo.title || 'Photo'}"
             class="block lightbox-image"
             style="max-width: calc(100vw - 46mm); max-height: calc(100vh - 66mm); width: auto; height: auto;"
@@ -748,22 +746,6 @@ function createLightbox(photos, currentIndex, onClose, onNavigate) {
     lightbox.dataset.popStateHandler = 'attached';
     lightbox._popStateHandler = handlePopState;
   }
-  
-  // Aggressive prevention of pull-down/overscroll on lightbox background
-  // This prevents address bar from appearing when pulling down
-  lightbox.addEventListener('touchmove', (e) => {
-    // Only allow touchmove on the image and navigation arrows
-    const target = e.target;
-    const isImage = target.tagName === 'IMG' || target.classList.contains('lightbox-image');
-    const isArrow = target.closest('.lightbox-arrow') || target.closest('button[id*="arrow"]');
-    const isCloseBtn = target.closest('#lightbox-close');
-    
-    // Allow touch on interactive elements, prevent on background
-    if (!isImage && !isArrow && !isCloseBtn) {
-      e.preventDefault();
-      e.stopPropagation();
-    }
-  }, { passive: false });
 
   return lightbox;
 }
@@ -790,24 +772,6 @@ function closeLightbox() {
   }
   
   // Restore body scroll and overscroll behavior
-  document.body.classList.remove('lightbox-open');
-  
-  // Remove document-level touch preventer
-  if (document._lightboxTouchPreventer) {
-    document.removeEventListener('touchmove', document._lightboxTouchPreventer);
-    delete document._lightboxTouchPreventer;
-    delete document.dataset.lightboxTouchPreventer;
-  }
-  
-  // Restore scroll position (reverse the aggressive lock)
-  const scrollY = document.body.dataset.scrollY;
-  document.body.style.position = '';
-  document.body.style.top = '';
-  document.body.style.width = '';
-  if (scrollY) {
-    window.scrollTo(0, parseInt(scrollY));
-  }
-  
   document.body.style.overflow = 'unset';
   document.body.style.overscrollBehavior = 'auto';
   document.documentElement.style.overscrollBehavior = 'auto';
@@ -876,9 +840,9 @@ function updateLightboxContent(currentIndex) {
     imageContainer.style.alignItems = 'center';
     imageContainer.style.justifyContent = 'center';
     
-    // Create new image
+    // Create new image (use mobile or desktop version based on device)
     const newImg = document.createElement('img');
-    newImg.src = photo.url;
+    newImg.src = getImageUrl(photo);
     newImg.alt = photo.title || 'Photo';
     newImg.className = 'block lightbox-image';
     newImg.style.cssText = 'max-width: calc(100vw - 46mm); max-height: calc(100vh - 66mm); width: auto; height: auto; opacity: 0; position: absolute; top: 0; left: 0; right: 0; bottom: 0; margin: auto;';
@@ -1037,28 +1001,6 @@ function renderLightbox() {
   );
 
   document.body.appendChild(lightbox);
-  
-  // Lock body scroll to prevent pull-down address bar on mobile
-  document.body.classList.add('lightbox-open');
-  
-  // More aggressive scroll lock for mobile browsers
-  const scrollY = window.scrollY;
-  document.body.style.position = 'fixed';
-  document.body.style.top = `-${scrollY}px`;
-  document.body.style.width = '100%';
-  document.body.dataset.scrollY = scrollY;
-  
-  // Prevent touchmove on document to block pull-to-refresh and address bar reveal
-  const preventTouch = (e) => {
-    if (e.target.closest('#lightbox')) {
-      // Let lightbox handle its own touch events
-      return;
-    }
-    e.preventDefault();
-  };
-  document.addEventListener('touchmove', preventTouch, { passive: false });
-  document.dataset.lightboxTouchPreventer = 'attached';
-  document._lightboxTouchPreventer = preventTouch;
 }
 
 // Main render function

@@ -8,9 +8,11 @@ const CONFIG = {
   contentFile: './content.json',
   outputFile: './data/photos.json',
   originalsDir: './images/originals',
-  webDir: './images/web',           // Web versions for lightbox
+  webDir: './images/web',           // Web versions for lightbox (desktop)
+  mobileDir: './images/mobile',     // Mobile versions for lightbox (phones/tablets)
   thumbsDir: './images/thumbs',
   thumbWidth: 400,                  // Width for thumbnails (grid)
+  mobileMaxDimension: 1280,         // Max dimension for mobile lightbox
   webMaxDimension: 2560,            // Max dimension for web versions (lightbox)
   imageExtensions: ['.jpg', '.jpeg', '.png', '.webp', '.heic', '.heif']
 };
@@ -165,7 +167,22 @@ async function processImage(imagePath, section, index) {
   
   console.log(`  ✓ Thumbnail created`);
   
-  // Generate web version (for lightbox display)
+  // Generate mobile version (for lightbox on phones/tablets)
+  const mobileDir = path.join(CONFIG.mobileDir, section.folder);
+  ensureDir(mobileDir);
+  const mobilePath = path.join(mobileDir, filename);
+  
+  await sharp(buffer)
+    .resize(CONFIG.mobileMaxDimension, CONFIG.mobileMaxDimension, {
+      fit: 'inside',
+      withoutEnlargement: true
+    })
+    .jpeg({ quality: 85, mozjpeg: true })
+    .toFile(mobilePath);
+  
+  console.log(`  ✓ Mobile version created`);
+  
+  // Generate web version (for lightbox display on desktop)
   const webDir = path.join(CONFIG.webDir, section.folder);
   ensureDir(webDir);
   const webPath = path.join(webDir, filename);
@@ -180,13 +197,14 @@ async function processImage(imagePath, section, index) {
   
   console.log(`  ✓ Web version created`);
   
-  // Get web version dimensions (these are what users will see)
+  // Get web version dimensions (these are what users will see on desktop)
   const webMetadata = await sharp(webPath).metadata();
   
   // Build photo data object - only include fields that exist
   const photoData = {
     id: `${section.id}-${index + 1}`,
     url: `images/web/${section.folder}/${filename}`,
+    mobileUrl: `images/mobile/${section.folder}/${filename}`,
     thumb: `images/thumbs/${section.folder}/${filename}`,
     width: webMetadata.width,
     height: webMetadata.height,
