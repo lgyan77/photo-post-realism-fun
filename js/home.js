@@ -731,9 +731,27 @@ function createLightbox(photos, currentIndex, onClose, onNavigate) {
   // Add wheel listener for trackpad gestures
   lightbox.addEventListener('wheel', handleWheel, { passive: false });
 
-  // Prevent body scroll when lightbox is open (desktop only)
-  // On mobile, we need body to be scrollable to control the address bar
-  if (!isMobileOrTablet()) {
+  // Handle body scroll based on device
+  if (isMobileOrTablet()) {
+    // On mobile: save scroll position and scroll to top
+    // This prevents main page from showing behind lightbox
+    lightbox.dataset.savedScrollY = window.scrollY.toString();
+    window.scrollTo({ top: 0, behavior: 'instant' });
+    
+    // Keep body scrollable but prevent scrolling down (only allow scroll to top for address bar)
+    const preventScrollDown = () => {
+      if (window.scrollY > 0) {
+        window.scrollTo({ top: 0, behavior: 'instant' });
+      }
+    };
+    
+    // Attach scroll listener to prevent downward scrolling
+    window.addEventListener('scroll', preventScrollDown, { passive: true });
+    lightbox._scrollDownPreventer = preventScrollDown;
+    
+    document.body.style.overflow = 'auto';
+  } else {
+    // On desktop: prevent all scrolling
     document.body.style.overflow = 'hidden';
   }
   document.body.style.overscrollBehavior = 'none';
@@ -775,11 +793,22 @@ function openLightbox(sectionId, photoIndex) {
 function closeLightbox() {
   // Remove keyboard listener and lightbox
   const existingLightbox = document.getElementById('lightbox');
+  let savedScrollY = 0;
+  
   if (existingLightbox) {
+    // Get saved scroll position before removing
+    savedScrollY = parseInt(existingLightbox.dataset.savedScrollY || '0', 10);
+    
     // Clean up popstate listener if it exists
     if (existingLightbox._popStateHandler) {
       window.removeEventListener('popstate', existingLightbox._popStateHandler);
     }
+    
+    // Clean up scroll prevention listener on mobile
+    if (existingLightbox._scrollDownPreventer) {
+      window.removeEventListener('scroll', existingLightbox._scrollDownPreventer);
+    }
+    
     existingLightbox.remove();
   }
   
@@ -789,6 +818,11 @@ function closeLightbox() {
   }
   document.body.style.overscrollBehavior = 'auto';
   document.documentElement.style.overscrollBehavior = 'auto';
+  
+  // Restore scroll position on mobile
+  if (isMobileOrTablet() && savedScrollY > 0) {
+    window.scrollTo({ top: savedScrollY, behavior: 'instant' });
+  }
   
   state.lightbox = {
     isOpen: false,
