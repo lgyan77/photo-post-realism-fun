@@ -481,8 +481,11 @@ function createLightbox(photos, currentIndex, onClose, onNavigate) {
         overflow: hidden;
         touch-action: pan-y; /* allow vertical gestures, horizontal handled manually */
         flex: 1 1 auto;
-        /* IMPORTANT: don't center the track. We translate by one slide to show "current". */
-        display: block;
+        /* IMPORTANT: don't horizontally center the track (would shift by +1 with translate math).
+           But DO vertically center the content (portrait). */
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
         min-height: 0; /* allow shrinking in flex column */
         /* Clearance is handled by layout.js on phones via .lightbox-scale-in { padding: 3mm } */
       }
