@@ -366,6 +366,13 @@ function applyLightboxSizing(lightbox) {
   if (content) {
     content.style.padding = isMobileOrTablet() ? '3mm' : '15mm';
   }
+
+  // If carousel is present, padding changes can change carousel width.
+  // Re-center the film strip so we don't "start" on image+1.
+  const carouselState = lightbox._carouselState;
+  if (carouselState && !carouselState.dragging && !carouselState.animating) {
+    resetLightboxCarouselPosition();
+  }
 }
 
 function preloadImage(url) {
@@ -474,9 +481,8 @@ function createLightbox(photos, currentIndex, onClose, onNavigate) {
         overflow: hidden;
         touch-action: pan-y; /* allow vertical gestures, horizontal handled manually */
         flex: 1 1 auto;
-        display: flex;
-        align-items: center;
-        justify-content: center;
+        /* IMPORTANT: don't center the track. We translate by one slide to show "current". */
+        display: block;
         min-height: 0; /* allow shrinking in flex column */
         /* Clearance is handled by layout.js on phones via .lightbox-scale-in { padding: 3mm } */
       }
@@ -484,6 +490,8 @@ function createLightbox(photos, currentIndex, onClose, onNavigate) {
         display: flex;
         align-items: center;
         gap: clamp(14px, 3vw, 28px);
+        flex: none;         /* don't let track shrink inside carousel */
+        width: max-content; /* track width matches slides; fixes initial centering shift */
         will-change: transform;
         transform: translate3d(0, 0, 0);
       }
@@ -712,7 +720,10 @@ function createLightbox(photos, currentIndex, onClose, onNavigate) {
 
   // Touch drag on carousel (follow finger)
   if (carousel && track) {
-    recalcCarouselStep();
+    // IMPORTANT: don't call recalcCarouselStep() yet — createLightbox runs before the lightbox
+    // is attached to the DOM, so carousel.clientWidth can be 0 and the strip starts offset.
+    // We'll initialize sizing/position after append (renderLightbox -> updateLightboxContent).
+    // (No hiding; the strip is positioned immediately after append.)
 
     const onTouchStart = (e) => {
       if (carouselState.animating) return;
@@ -996,11 +1007,11 @@ function createLightbox(photos, currentIndex, onClose, onNavigate) {
 }
 
 // Lightbox functions
-function openLightbox(sectionId, photoIndex) {
+function openLightbox(sectionId, photoIndexOrId) {
   state.lightbox = {
     isOpen: true,
     sectionId,
-    photoIndex
+    photoIndex: Number(photoIndexOrId)
   };
   renderLightbox();
 }
@@ -1096,7 +1107,9 @@ function navigateLightbox(newIndex) {
   if (!currentSection || !currentSection.photos || currentSection.photos.length === 0) return;
 
   const photos = currentSection.photos;
-  const clampedIndex = Math.max(0, Math.min(newIndex, photos.length - 1));
+  const n = Number(newIndex);
+  const nextIndex = Number.isFinite(n) ? Math.trunc(n) : 0;
+  const clampedIndex = Math.max(0, Math.min(nextIndex, photos.length - 1));
   state.lightbox.photoIndex = clampedIndex;
 
   const existingLightbox = document.getElementById('lightbox');
@@ -1165,8 +1178,10 @@ function renderLightbox() {
 
   document.body.appendChild(lightbox);
 
-  // Preload adjacent images so swipe feels instant
-  preloadLightboxNeighbors(currentSection.photos, state.lightbox.photoIndex);
+  // IMPORTANT: apply sizing first (it can change padding and carousel width)
+  // then populate slots + position the film strip.
+  applyLightboxSizing(lightbox);
+  updateLightboxContent(state.lightbox.photoIndex);
   
   // Request fullscreen ONLY on actual mobile devices (not desktop, not simulators)
   const isActualMobile = isMobileOrTablet() && /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
