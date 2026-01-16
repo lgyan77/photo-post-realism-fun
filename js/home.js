@@ -759,6 +759,13 @@ function createLightbox(photos, currentIndex, onClose, onNavigate) {
   const carousel = lightbox.querySelector('#lightbox-carousel');
   const track = lightbox.querySelector('#lightbox-track');
 
+  const prefersReducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  // Desktop feels better with a slower, more cinematic easing; keep mobile snappy.
+  const SLIDE_MS = prefersReducedMotion ? 0 : (isMobileOrTablet() ? 320 : 520);
+  const SLIDE_EASE = isMobileOrTablet()
+    ? 'cubic-bezier(0.2, 0.8, 0.2, 1)'
+    : 'cubic-bezier(0.4, 0.0, 0.2, 1)'; // ease-in-out (gentle start + gentle stop)
+
   const carouselState = {
     step: 0, // slide width + gap
     baseX: 0, // centered position (-step)
@@ -801,7 +808,7 @@ function createLightbox(photos, currentIndex, onClose, onNavigate) {
   const snapTo = (targetX, onDone) => {
     if (!track) return;
     carouselState.animating = true;
-    track.style.transition = 'transform 320ms ease';
+    track.style.transition = `transform ${SLIDE_MS}ms ${SLIDE_EASE}`;
     track.style.transform = `translate3d(${targetX}px, 0, 0)`;
     const done = () => {
       track.removeEventListener('transitionend', done);
