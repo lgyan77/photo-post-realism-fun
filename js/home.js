@@ -479,6 +479,35 @@ function createLightbox(photos, currentIndex, onClose, onNavigate) {
       .lightbox-arrow.visible {
         opacity: 1;
       }
+      /* Icon buttons (close/fullscreen) should work on any image colors */
+      #lightbox .lb-icon-btn {
+        width: 40px;
+        height: 40px;
+        border-radius: 9999px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(0, 0, 0, 0.35);
+        border: 1px solid rgba(255, 255, 255, 0.25);
+        box-shadow: 0 2px 14px rgba(0, 0, 0, 0.35);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        color: rgba(255, 255, 255, 0.85);
+        transition: background 160ms ease, border-color 160ms ease, color 160ms ease, transform 160ms ease;
+      }
+      #lightbox .lb-icon-btn:hover {
+        background: rgba(0, 0, 0, 0.55);
+        border-color: rgba(255, 255, 255, 0.4);
+        color: rgba(255, 255, 255, 1);
+      }
+      #lightbox .lb-icon-btn:active {
+        transform: scale(0.98);
+      }
+      #lightbox .lb-icon-btn svg {
+        width: 20px;
+        height: 20px;
+        display: block;
+      }
       .lightbox-content {
         box-sizing: border-box; /* prevents w-full/h-full + padding from overflowing & getting clipped */
       }
@@ -557,13 +586,27 @@ function createLightbox(photos, currentIndex, onClose, onNavigate) {
     <!-- Close button -->
     <button
       id="lightbox-close"
-      class="absolute top-6 right-6 z-50 text-white/60 hover:text-white transition-colors duration-300"
+      class="lb-icon-btn absolute top-6 right-6 z-50"
       aria-label="Close lightbox"
     >
       <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1">
         <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path>
       </svg>
     </button>
+
+    <!-- Desktop-only fullscreen toggle -->
+    ${!isMobileOrTablet() ? `
+      <button
+        id="lightbox-fullscreen"
+        class="lb-icon-btn absolute top-6 right-[4.25rem] z-50"
+        aria-label="Enter fullscreen"
+        title="Fullscreen"
+      >
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M8 3H5a2 2 0 0 0-2 2v3M16 3h3a2 2 0 0 1 2 2v3M8 21H5a2 2 0 0 1-2-2v-3M16 21h3a2 2 0 0 0 2-2v-3"></path>
+        </svg>
+      </button>
+    ` : ''}
 
     <!-- Photo counter -->
     <div class="absolute bottom-6 left-1/2 -translate-x-1/2 text-white/40 text-xs tracking-widest font-light">
@@ -655,6 +698,62 @@ function createLightbox(photos, currentIndex, onClose, onNavigate) {
     e.stopPropagation();
     onClose();
   };
+
+  // Desktop-only fullscreen toggle
+  if (!isMobileOrTablet()) {
+    const fsBtn = lightbox.querySelector('#lightbox-fullscreen');
+    const setFsBtnState = () => {
+      if (!fsBtn) return;
+      const isFs = !!(document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement);
+      fsBtn.setAttribute('aria-label', isFs ? 'Exit fullscreen' : 'Enter fullscreen');
+      fsBtn.title = isFs ? 'Exit fullscreen' : 'Fullscreen';
+      fsBtn.innerHTML = isFs
+        ? `
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 9H5V5M15 9h4V5M9 15H5v4M15 15h4v4"></path>
+          </svg>
+        `
+        : `
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M8 3H5a2 2 0 0 0-2 2v3M16 3h3a2 2 0 0 1 2 2v3M8 21H5a2 2 0 0 1-2-2v-3M16 21h3a2 2 0 0 0 2-2v-3"></path>
+          </svg>
+        `;
+    };
+
+    if (fsBtn) {
+      fsBtn.onclick = async (e) => {
+        e.stopPropagation();
+        try {
+          const isFs = !!(document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement);
+          if (!isFs) {
+            if (lightbox.requestFullscreen) await lightbox.requestFullscreen();
+            else if (lightbox.webkitRequestFullscreen) await lightbox.webkitRequestFullscreen();
+            else if (lightbox.mozRequestFullScreen) await lightbox.mozRequestFullScreen();
+            else if (lightbox.msRequestFullscreen) await lightbox.msRequestFullscreen();
+          } else {
+            if (document.exitFullscreen) await document.exitFullscreen();
+            else if (document.webkitExitFullscreen) await document.webkitExitFullscreen();
+            else if (document.mozCancelFullScreen) await document.mozCancelFullScreen();
+            else if (document.msExitFullscreen) await document.msExitFullscreen();
+          }
+        } catch (_) {
+          // Ignore: browser can deny fullscreen (policy/user settings)
+        } finally {
+          setFsBtnState();
+        }
+      };
+    }
+
+    const handleFullscreenChange = () => setFsBtnState();
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+    document.addEventListener('mozfullscreenchange', handleFullscreenChange);
+    document.addEventListener('MSFullscreenChange', handleFullscreenChange);
+    lightbox._fullscreenChangeHandler = handleFullscreenChange;
+
+    // Initialize button state
+    setFsBtnState();
+  }
 
   // Film-strip carousel state + helpers
   const carousel = lightbox.querySelector('#lightbox-carousel');
