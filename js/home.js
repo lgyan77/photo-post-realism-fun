@@ -320,6 +320,12 @@ function buildLightboxSlideHTML(photo) {
     return `<div class="lightbox-slide-empty" aria-hidden="true"></div>`;
   }
 
+  // IMPORTANT:
+  // Keep mobile/tablet behavior unchanged. Only apply desktop-only clipping safeguards.
+  const imgStyle = isMobileOrTablet()
+    ? 'max-width: var(--lb-max-w, calc(100vw - 46mm)) !important; max-height: var(--lb-max-h, calc(100vh - 66mm)) !important; width: auto; height: auto;'
+    : 'max-width: min(100%, var(--lb-max-w, calc(100vw - 46mm))) !important; max-height: min(100vh, var(--lb-max-h, calc(100vh - 66mm))) !important; width: auto; height: auto;';
+
   return `
     <div class="lightbox-outer-frame relative bg-black flex items-center justify-center" style="padding: 0mm;">
       <div class="border border-white bg-black flex items-center justify-center" style="padding: 3mm;">
@@ -327,7 +333,7 @@ function buildLightboxSlideHTML(photo) {
           src="${getImageUrl(photo)}"
           alt="${photo.title || 'Photo'}"
           class="block lightbox-image"
-          style="max-width: var(--lb-max-w, calc(100vw - 46mm)) !important; max-height: var(--lb-max-h, calc(100vh - 66mm)) !important; width: auto; height: auto;"
+          style="${imgStyle}"
         />
       </div>
     </div>
@@ -354,9 +360,23 @@ function applyLightboxSizing(lightbox) {
   const viewportW = vv ? vv.width : window.innerWidth;
   const viewportH = vv ? vv.height : window.innerHeight;
 
-  const subtractPx = 2 * (EDGE_MM + INNER_MM) * MM_TO_PX + 2 * BORDER_PX;
-  const maxW = Math.max(0, Math.floor(viewportW - subtractPx));
-  const maxH = Math.max(0, Math.floor(viewportH - subtractPx));
+  // On desktop, compute against the *actual* carousel viewport size so the image never overflows
+  // vertically when the window gets very wide (width-driven scaling).
+  // On phones/tablets keep the proven viewport-based logic unchanged.
+  const desktopCarousel = !isMobileOrTablet() ? lightbox.querySelector('#lightbox-carousel') : null;
+  const framePx = 2 * (INNER_MM * MM_TO_PX + BORDER_PX); // inner mat + border, both sides
+
+  let maxW;
+  let maxH;
+
+  if (desktopCarousel && desktopCarousel.clientWidth > 0 && desktopCarousel.clientHeight > 0) {
+    maxW = Math.max(0, Math.floor(desktopCarousel.clientWidth - framePx));
+    maxH = Math.max(0, Math.floor(desktopCarousel.clientHeight - framePx));
+  } else {
+    const subtractPx = 2 * (EDGE_MM + INNER_MM) * MM_TO_PX + 2 * BORDER_PX;
+    maxW = Math.max(0, Math.floor(viewportW - subtractPx));
+    maxH = Math.max(0, Math.floor(viewportH - subtractPx));
+  }
 
   // Put values on the lightbox so all slide images inherit them
   lightbox.style.setProperty('--lb-max-w', `${maxW}px`);
@@ -488,6 +508,8 @@ function createLightbox(photos, currentIndex, onClose, onNavigate) {
         justify-content: flex-start;
         min-height: 0; /* allow shrinking in flex column */
         /* Clearance is handled by layout.js on phones via .lightbox-scale-in { padding: 3mm } */
+        box-sizing: border-box;
+        height: 100%;
       }
       #lightbox .lightbox-track {
         display: flex;
@@ -497,10 +519,12 @@ function createLightbox(photos, currentIndex, onClose, onNavigate) {
         width: max-content; /* track width matches slides; fixes initial centering shift */
         will-change: transform;
         transform: translate3d(0, 0, 0);
+        height: 100%;
       }
       @media (orientation: landscape) {
         /* Reduce gap by ~1/3 in landscape */
-        #lightbox .lightbox-track {
+        body.phone-landscape #lightbox .lightbox-track,
+        body.tablet-landscape #lightbox .lightbox-track {
           gap: clamp(10px, 2vw, 18px);
         }
       }
@@ -509,10 +533,23 @@ function createLightbox(photos, currentIndex, onClose, onNavigate) {
         display: flex;
         justify-content: center;
         align-items: center;
+        height: 100%;
       }
       #lightbox .lightbox-slide-empty {
         width: 100%;
         height: 1px;
+      }
+      /* Meta/caption: fade out as swipe starts, fade in after commit */
+      #lightbox-meta {
+        transition: opacity 160ms ease;
+        will-change: opacity;
+        /* Prevent layout jitter when swapping between images that do/don't have meta:
+           reserve a consistent caption block height computed at runtime on desktop. */
+        min-height: var(--lb-meta-reserved-h, 0px);
+      }
+      #lightbox-meta.lb-meta-hidden {
+        opacity: 0;
+        pointer-events: none;
       }
       /* Mobile-specific sizing handled by device detection in layout.js */
     </style>
@@ -551,7 +588,7 @@ function createLightbox(photos, currentIndex, onClose, onNavigate) {
       </div>
 
       <!-- Metadata and description -->
-      <div id="lightbox-meta" class="text-white/60 text-xs space-y-2 max-w-2xl text-center mt-6">
+      <div id="lightbox-meta" class="text-white/60 text-xs space-y-2 w-full text-center mt-6">
         ${buildMetadataHTML(photo)}
         ${photo.comment ? `<p class="text-white/50 italic font-light">${photo.comment}</p>` : ''}
       </div>
@@ -675,18 +712,151 @@ function createLightbox(photos, currentIndex, onClose, onNavigate) {
     track.addEventListener('transitionend', done);
   };
 
+  const setTrackCenteredInstant = () => {
+    if (!track) return;
+    track.style.transition = 'none';
+    track.style.transform = `translate3d(${carouselState.baseX}px, 0, 0)`;
+    // Force reflow so the next animated snap doesn't get merged.
+    void track.offsetHeight;
+    track.style.transition = '';
+  };
+
+  const relabelSlotsByOrder = () => {
+    if (!track) return;
+    const slides = Array.from(track.querySelectorAll('.lightbox-slide'));
+    if (slides.length < 3) return;
+    slides[0].setAttribute('data-slot', 'prev');
+    slides[1].setAttribute('data-slot', 'current');
+    slides[2].setAttribute('data-slot', 'next');
+  };
+
+  const updateMetaForIndex = (idx, { reveal } = { reveal: true }) => {
+    const metaEl = lightbox.querySelector('#lightbox-meta');
+    const p = photos[idx];
+    if (!metaEl || !p) return;
+    const html = `${buildMetadataHTML(p)}${p.comment ? `<p class="text-white/50 italic font-light">${p.comment}</p>` : ''}`;
+    metaEl.innerHTML = html;
+    if (html.trim()) {
+      if (reveal) requestAnimationFrame(() => metaEl.classList.remove('lb-meta-hidden'));
+      else metaEl.classList.add('lb-meta-hidden');
+    } else {
+      metaEl.classList.add('lb-meta-hidden');
+    }
+  };
+
+  // Desktop-only: compute a stable reserved meta height for this section at current viewport width.
+  // This prevents the carousel height (and thus image sizing/position) from changing when meta becomes empty.
+  const computeAndSetReservedMetaHeight = () => {
+    if (isMobileOrTablet()) return;
+    const metaEl = lightbox.querySelector('#lightbox-meta');
+    if (!metaEl) return;
+    const width = metaEl.clientWidth;
+    if (!width) return;
+
+    let meas = lightbox._lbMetaMeasureEl;
+    if (!meas) {
+      meas = document.createElement('div');
+      meas.style.position = 'fixed';
+      meas.style.left = '-99999px';
+      meas.style.top = '0';
+      meas.style.visibility = 'hidden';
+      meas.style.pointerEvents = 'none';
+      meas.style.zIndex = '-1';
+      meas.style.margin = '0';
+      meas.style.padding = '0';
+      document.body.appendChild(meas);
+      lightbox._lbMetaMeasureEl = meas;
+    }
+
+    // Copy typography/layout classes; remove margin so we measure content height only.
+    meas.className = metaEl.className.replace(/\bmt-\d+\b/g, '');
+    meas.style.width = `${width}px`;
+
+    let maxH = 0;
+    for (const p of photos) {
+      const html = `${buildMetadataHTML(p)}${p.comment ? `<p class="text-white/50 italic font-light">${p.comment}</p>` : ''}`;
+      meas.innerHTML = html;
+      const h = meas.getBoundingClientRect().height;
+      if (h > maxH) maxH = h;
+    }
+
+    lightbox.style.setProperty('--lb-meta-reserved-h', `${Math.ceil(maxH)}px`);
+  };
+
+  // Commit navigation without recreating all DOM (prevents flicker at the end of the swipe).
+  // We rotate the 3 slide elements and only rebuild the newly-exposed neighbor.
+  const commitNavigate = (direction) => {
+    if (!track) return;
+
+    const currentIdx = state.lightbox.photoIndex;
+    const newIndex = currentIdx + direction;
+    if (newIndex < 0 || newIndex > photos.length - 1) {
+      setTrackCenteredInstant();
+      return;
+    }
+
+    // Rotate slide elements so the image that was just swiped into view becomes the centered "current".
+    if (direction === 1) {
+      // Move prev -> end. Middle becomes the old "next" (the new current).
+      const first = track.firstElementChild;
+      if (first) track.appendChild(first);
+    } else if (direction === -1) {
+      // Move next -> front. Middle becomes the old "prev" (the new current).
+      const last = track.lastElementChild;
+      if (last) track.insertBefore(last, track.firstElementChild);
+    }
+
+    relabelSlotsByOrder();
+
+    // Update state + UI
+    state.lightbox.photoIndex = newIndex;
+
+    const counter = lightbox.querySelector('.absolute.bottom-6');
+    if (counter) counter.textContent = `${newIndex + 1} / ${photos.length}`;
+
+    const leftArrow = lightbox.querySelector('#lightbox-prev');
+    const rightArrow = lightbox.querySelector('#lightbox-next');
+    if (leftArrow) leftArrow.style.display = newIndex > 0 ? 'block' : 'none';
+    if (rightArrow) rightArrow.style.display = newIndex < photos.length - 1 ? 'block' : 'none';
+
+    // Update meta for the new image (fade in if present; stay hidden if empty)
+    updateMetaForIndex(newIndex, { reveal: true });
+
+    // Rebuild only the newly exposed neighbor slide
+    const prevSlot = track.querySelector('.lightbox-slide[data-slot="prev"]');
+    const nextSlot = track.querySelector('.lightbox-slide[data-slot="next"]');
+    if (direction === 1) {
+      // New next is newIndex + 1
+      if (nextSlot) nextSlot.innerHTML = buildLightboxSlideHTML(photos[newIndex + 1]);
+    } else if (direction === -1) {
+      // New prev is newIndex - 1
+      if (prevSlot) prevSlot.innerHTML = buildLightboxSlideHTML(photos[newIndex - 1]);
+    }
+
+    // Center track instantly (so there is no visible "reset" flash)
+    setTrackCenteredInstant();
+    preloadLightboxNeighbors(photos, newIndex);
+  };
+
   const animateNavigate = (direction) => {
     if (!track || carouselState.animating) return;
+    // Fade out meta immediately as navigation begins (so it doesn't "belong" to incoming image)
+    const metaEl = lightbox.querySelector('#lightbox-meta');
+    if (metaEl) metaEl.classList.add('lb-meta-hidden');
     const currentIdx = state.lightbox.photoIndex;
     const hasPrev = currentIdx > 0;
     const hasNext = currentIdx < photos.length - 1;
 
-    if (direction === -1 && !hasPrev) return snapTo(carouselState.baseX);
-    if (direction === 1 && !hasNext) return snapTo(carouselState.baseX);
+    if (direction === -1 && !hasPrev) {
+      return snapTo(carouselState.baseX, () => updateMetaForIndex(currentIdx, { reveal: true }));
+    }
+    if (direction === 1 && !hasNext) {
+      return snapTo(carouselState.baseX, () => updateMetaForIndex(currentIdx, { reveal: true }));
+    }
 
     const targetX = direction === 1 ? -2 * carouselState.step : 0;
     snapTo(targetX, () => {
-      onNavigate(currentIdx + direction);
+      commitNavigate(direction);
     });
   };
 
@@ -752,6 +922,12 @@ function createLightbox(photos, currentIndex, onClose, onNavigate) {
       if (!carouselState.axis) {
         if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return;
         carouselState.axis = Math.abs(dx) > Math.abs(dy) ? 'x' : 'y';
+        // As soon as we recognize a horizontal swipe, fade out meta so it doesn't
+        // "belong" to the incoming image during the drag.
+        if (carouselState.axis === 'x') {
+          const metaEl = lightbox.querySelector('#lightbox-meta');
+          if (metaEl) metaEl.classList.add('lb-meta-hidden');
+        }
       }
 
       if (carouselState.axis !== 'x') return;
@@ -788,7 +964,10 @@ function createLightbox(photos, currentIndex, onClose, onNavigate) {
       } else if (dx > threshold) {
         animateNavigate(-1);
       } else {
-        snapTo(carouselState.baseX);
+        // Cancel: snap back, then restore meta for the current image
+        snapTo(carouselState.baseX, () => {
+          updateMetaForIndex(state.lightbox.photoIndex, { reveal: true });
+        });
       }
     };
 
@@ -804,7 +983,10 @@ function createLightbox(photos, currentIndex, onClose, onNavigate) {
   }
 
   // Apply precise sizing for the "3mm to white frame" spec (uses visualViewport when available)
-  const handleSizing = () => applyLightboxSizing(lightbox);
+  const handleSizing = () => {
+    applyLightboxSizing(lightbox);
+    computeAndSetReservedMetaHeight();
+  };
   window.addEventListener('resize', handleSizing, { passive: true });
   window.addEventListener('orientationchange', handleSizing, { passive: true });
   lightbox._lbSizingHandler = handleSizing;
@@ -1061,6 +1243,12 @@ function closeLightbox() {
       document.removeEventListener('mozfullscreenchange', existingLightbox._fullscreenChangeHandler);
       document.removeEventListener('MSFullscreenChange', existingLightbox._fullscreenChangeHandler);
     }
+
+    // Clean up meta measurement element (desktop only)
+    if (existingLightbox._lbMetaMeasureEl) {
+      existingLightbox._lbMetaMeasureEl.remove();
+      existingLightbox._lbMetaMeasureEl = null;
+    }
     
     existingLightbox.remove();
   }
@@ -1140,12 +1328,6 @@ function updateLightboxContent(currentIndex) {
   const rightArrow = document.getElementById('lightbox-next');
   if (leftArrow) leftArrow.style.display = currentIndex > 0 ? 'block' : 'none';
   if (rightArrow) rightArrow.style.display = currentIndex < photos.length - 1 ? 'block' : 'none';
-
-  // Update metadata
-  const meta = document.getElementById('lightbox-meta');
-  if (meta) {
-    meta.innerHTML = `${buildMetadataHTML(photo)}${photo.comment ? `<p class="text-white/50 italic font-light">${photo.comment}</p>` : ''}`;
-  }
 
   // Update carousel slots (prev/current/next)
   const prevSlot = document.querySelector('#lightbox .lightbox-slide[data-slot="prev"]');
