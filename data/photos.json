@@ -55,12 +55,15 @@
         },
         {
           "id": "zion-utah-usa-5",
-          "url": "images/web/zion-utah-usa/OMD0201-2.jpg",
-          "mobileUrl": "images/mobile/zion-utah-usa/OMD0201-2.jpg",
-          "thumb": "images/thumbs/zion-utah-usa/OMD0201-2.jpg",
+          "url": "images/web/zion-utah-usa/OMD0201-3.jpg",
+          "mobileUrl": "images/mobile/zion-utah-usa/OMD0201-3.jpg",
+          "thumb": "images/thumbs/zion-utah-usa/OMD0201-3.jpg",
           "width": 2560,
           "height": 1920,
-          "date": "2025-12-04T12:39:36.000Z"
+          "date": "2025-09-27T16:54:00.000Z",
+          "camera": "OLYMPUS CORPORATION E-M10MarkIV",
+          "iso": "ISO 200",
+          "shutterSpeed": "1/25s"
         },
         {
           "id": "zion-utah-usa-6",
