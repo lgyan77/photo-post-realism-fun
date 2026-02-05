@@ -347,6 +347,14 @@ function applyLightboxSizing(lightbox) {
   if (!lightbox) return;
 
   const content = lightbox.querySelector('.lightbox-content');
+  const isMobile = isMobileOrTablet();
+
+  // IMPORTANT: padding affects carousel clientHeight/Width on desktop.
+  // Apply it BEFORE measuring carousel so we don't compute an oversized max-height
+  // (which causes the white frame to be clipped until the first resize event).
+  if (content) {
+    content.style.padding = isMobile ? '3mm' : '15mm';
+  }
 
   // Spec:
   // - 3mm from screen edge to WHITE FRAME (outer border)
@@ -363,7 +371,7 @@ function applyLightboxSizing(lightbox) {
   // On desktop, compute against the *actual* carousel viewport size so the image never overflows
   // vertically when the window gets very wide (width-driven scaling).
   // On phones/tablets keep the proven viewport-based logic unchanged.
-  const desktopCarousel = !isMobileOrTablet() ? lightbox.querySelector('#lightbox-carousel') : null;
+  const desktopCarousel = !isMobile ? lightbox.querySelector('#lightbox-carousel') : null;
   const framePx = 2 * (INNER_MM * MM_TO_PX + BORDER_PX); // inner mat + border, both sides
 
   let maxW;
@@ -381,11 +389,6 @@ function applyLightboxSizing(lightbox) {
   // Put values on the lightbox so all slide images inherit them
   lightbox.style.setProperty('--lb-max-w', `${maxW}px`);
   lightbox.style.setProperty('--lb-max-h', `${maxH}px`);
-
-  // Ensure the container doesn't add extra padding on phones (layout.js may also override)
-  if (content) {
-    content.style.padding = isMobileOrTablet() ? '3mm' : '15mm';
-  }
 
   // If carousel is present, padding changes can change carousel width.
   // Re-center the film strip so we don't "start" on image+1.
@@ -1473,6 +1476,17 @@ function renderLightbox() {
   // then populate slots + position the film strip.
   applyLightboxSizing(lightbox);
   updateLightboxContent(state.lightbox.photoIndex);
+
+  // Desktop safety net: run one more sizing pass after first paint.
+  // This handles cases where fonts/images slightly change layout after append.
+  if (!isMobileOrTablet()) {
+    requestAnimationFrame(() => {
+      const lb = document.getElementById('lightbox');
+      if (!lb) return;
+      applyLightboxSizing(lb);
+      resetLightboxCarouselPosition();
+    });
+  }
   
   // Request fullscreen ONLY on actual mobile devices (not desktop, not simulators)
   const isActualMobile = isMobileOrTablet() && /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
