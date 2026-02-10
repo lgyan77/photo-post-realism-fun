@@ -131,6 +131,28 @@
       ]
     },
     {
+      "id": "bryce-canyon-uta-usa",
+      "title": "Bryce Canyon Utah USA",
+      "description": "Stretching the reality of red rock formations and occasional trees in Bryce Canyon.",
+      "photos": [
+        {
+          "id": "bryce-canyon-uta-usa-1",
+          "url": "images/web/bryce-canyon/OMD0431-3-8.jpg",
+          "mobileUrl": "images/mobile/bryce-canyon/OMD0431-3-8.jpg",
+          "thumb": "images/thumbs/bryce-canyon/OMD0431-3-8.jpg",
+          "width": 2560,
+          "height": 1810,
+          "date": "2025-09-29T10:42:33.000Z",
+          "camera": "OLYMPUS CORPORATION E-M10MarkIV",
+          "lens": "OLYMPUS M.12-40mm F2.8",
+          "focalLength": "12mm",
+          "aperture": "f/10.0",
+          "iso": "ISO 200",
+          "shutterSpeed": "1/400s"
+        }
+      ]
+    },
+    {
       "id": "st-anton-tyrol-austria",
       "title": "St Anton Tyrol Austria",
       "description": "Shades of white on the slopes of Tyrol.",
