@@ -137,9 +137,9 @@
       "photos": [
         {
           "id": "bryce-canyon-uta-usa-1",
-          "url": "images/web/bryce-canyon/OMD0431-3-8.jpg",
-          "mobileUrl": "images/mobile/bryce-canyon/OMD0431-3-8.jpg",
-          "thumb": "images/thumbs/bryce-canyon/OMD0431-3-8.jpg",
+          "url": "images/web/bryce-canyon/1OMD431-fin.jpg",
+          "mobileUrl": "images/mobile/bryce-canyon/1OMD431-fin.jpg",
+          "thumb": "images/thumbs/bryce-canyon/1OMD431-fin.jpg",
           "width": 2560,
           "height": 1810,
           "date": "2025-09-29T10:42:33.000Z",
@@ -149,6 +149,45 @@
           "aperture": "f/10.0",
           "iso": "ISO 200",
           "shutterSpeed": "1/400s"
+        },
+        {
+          "id": "bryce-canyon-uta-usa-2",
+          "url": "images/web/bryce-canyon/OMD0398-3.jpg",
+          "mobileUrl": "images/mobile/bryce-canyon/OMD0398-3.jpg",
+          "thumb": "images/thumbs/bryce-canyon/OMD0398-3.jpg",
+          "width": 2560,
+          "height": 1795,
+          "date": "2025-09-29T08:08:59.000Z",
+          "camera": "OLYMPUS CORPORATION E-M10MarkIV",
+          "iso": "ISO 200",
+          "shutterSpeed": "1/50s"
+        },
+        {
+          "id": "bryce-canyon-uta-usa-3",
+          "url": "images/web/bryce-canyon/OMD0451-3.jpg",
+          "mobileUrl": "images/mobile/bryce-canyon/OMD0451-3.jpg",
+          "thumb": "images/thumbs/bryce-canyon/OMD0451-3.jpg",
+          "width": 2560,
+          "height": 1500,
+          "date": "2025-09-29T11:58:58.000Z",
+          "camera": "OLYMPUS CORPORATION E-M10MarkIV",
+          "lens": "OLYMPUS M.12-40mm F2.8",
+          "focalLength": "17mm",
+          "aperture": "f/10.0",
+          "iso": "ISO 200",
+          "shutterSpeed": "1/160s"
+        },
+        {
+          "id": "bryce-canyon-uta-usa-4",
+          "url": "images/web/bryce-canyon/OMD09391-3.jpg",
+          "mobileUrl": "images/mobile/bryce-canyon/OMD09391-3.jpg",
+          "thumb": "images/thumbs/bryce-canyon/OMD09391-3.jpg",
+          "width": 2560,
+          "height": 1834,
+          "date": "2025-09-29T07:45:50.000Z",
+          "camera": "OLYMPUS CORPORATION E-M10MarkIV",
+          "iso": "ISO 200",
+          "shutterSpeed": "1/30s"
         }
       ]
     },
