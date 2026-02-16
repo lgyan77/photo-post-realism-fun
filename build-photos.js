@@ -14,7 +14,13 @@ const CONFIG = {
   thumbWidth: 400,                  // Width for thumbnails (grid)
   mobileMaxDimension: 1280,         // Max dimension for mobile lightbox
   webMaxDimension: 2560,            // Max dimension for web versions (lightbox)
-  imageExtensions: ['.jpg', '.jpeg', '.png', '.webp', '.heic', '.heif']
+  imageExtensions: ['.jpg', '.jpeg', '.png', '.webp', '.heic', '.heif'],
+
+  // About page: before/after example (thumbnails only)
+  aboutOriginalsDir: './images/about/originals',
+  aboutThumbsDir: './images/about/thumbs',
+  aboutDataFile: './data/about.json',
+  aboutThumbMaxDimension: 1000
 };
 
 // Ensure directories exist
@@ -235,6 +241,100 @@ async function processImage(imagePath, section, index) {
   return photoData;
 }
 
+function listImageFiles(dirPath) {
+  if (!fs.existsSync(dirPath)) return [];
+  return fs.readdirSync(dirPath)
+    .filter(file => {
+      const ext = path.extname(file).toLowerCase();
+      return CONFIG.imageExtensions.includes(ext);
+    })
+    .sort();
+}
+
+function pickBeforeAfter(files) {
+  if (!files || files.length === 0) return { before: null, after: null };
+
+  const lower = files.map(f => ({ file: f, lower: f.toLowerCase() }));
+  const before = lower.find(x => x.lower.includes('before'))?.file || null;
+  const after = lower.find(x => x.lower.includes('after'))?.file || null;
+
+  if (before && after) return { before, after };
+
+  // If exactly two, use alphabetical order unless we found one of the keywords
+  if (files.length === 2) {
+    if (before && !after) return { before, after: files.find(f => f !== before) || null };
+    if (after && !before) return { before: files.find(f => f !== after) || null, after };
+    return { before: files[0], after: files[1] };
+  }
+
+  // Fallback: take first two alphabetically (and if one keyword exists, prefer it)
+  const fallback = files.slice(0, 2);
+  if (before && !fallback.includes(before)) fallback[0] = before;
+  if (after && !fallback.includes(after)) fallback[1] = after;
+  return { before: fallback[0] || null, after: fallback[1] || null };
+}
+
+async function buildAboutComparison() {
+  const dir = CONFIG.aboutOriginalsDir;
+  if (!fs.existsSync(dir)) {
+    console.log('\nℹ️  About images folder not found, skipping about thumbnails');
+    return;
+  }
+
+  // Rename leading underscore files for GH Pages compatibility
+  const renamedCount = renameUnderscoreFiles(dir);
+  if (renamedCount > 0) {
+    console.log(`\n🔄 About images: renamed ${renamedCount} file(s) to remove leading underscores`);
+  }
+
+  const files = listImageFiles(dir);
+  if (files.length === 0) {
+    console.log('\nℹ️  No about images found, skipping about thumbnails');
+    return;
+  }
+
+  ensureDir(CONFIG.aboutThumbsDir);
+  ensureDir(path.dirname(CONFIG.aboutDataFile));
+
+  console.log(`\n🧩 Building About thumbnails (${files.length} image(s))...`);
+
+  // Create thumbs for all images in the directory (future-proof)
+  for (const filename of files) {
+    const srcPath = path.join(dir, filename);
+    const dstPath = path.join(CONFIG.aboutThumbsDir, filename);
+    const buffer = fs.readFileSync(srcPath);
+
+    await sharp(buffer)
+      .resize(CONFIG.aboutThumbMaxDimension, CONFIG.aboutThumbMaxDimension, {
+        fit: 'inside',
+        withoutEnlargement: true
+      })
+      .jpeg({ quality: 85, mozjpeg: true })
+      .toFile(dstPath);
+  }
+
+  const pair = pickBeforeAfter(files);
+  const aboutJson = {
+    comparison: {
+      before: pair.before ? {
+        full: `images/about/originals/${pair.before}`,
+        thumb: `images/about/thumbs/${pair.before}`
+      } : null,
+      after: pair.after ? {
+        full: `images/about/originals/${pair.after}`,
+        thumb: `images/about/thumbs/${pair.after}`
+      } : null
+    },
+    files: files.map(f => ({
+      full: `images/about/originals/${f}`,
+      thumb: `images/about/thumbs/${f}`
+    }))
+  };
+
+  fs.writeFileSync(CONFIG.aboutDataFile, JSON.stringify(aboutJson, null, 2));
+  console.log(`✓ Generated: ${CONFIG.aboutDataFile}`);
+}
+
 // Process all images in a section folder
 async function processSection(section) {
   const sectionDir = path.join(CONFIG.originalsDir, section.folder);
@@ -316,6 +416,9 @@ async function build() {
     const processedSection = await processSection(section);
     sections.push(processedSection);
   }
+
+  // Build About page thumbnails/data (before/after groundwork)
+  await buildAboutComparison();
   
   // Write output JSON
   const output = { sections };

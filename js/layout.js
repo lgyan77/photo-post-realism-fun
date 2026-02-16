@@ -381,6 +381,7 @@ function applyHeaderStyles() {
 
 // Create main header
 function createHeader() {
+  const isAboutPage = window.location.pathname.includes('about.html');
   const header = document.createElement('header');
   header.id = 'main-header';
   header.className = 'sticky top-0 left-0 right-0 z-40 transition-all duration-500 bg-white/95 backdrop-blur-sm';
@@ -390,6 +391,19 @@ function createHeader() {
     <div class="px-6 md:px-12 lg:px-16 py-5 md:py-6 border-b border-gray-100">
       <div class="flex items-center justify-between">
         <!-- Logo/Title -->
+        ${
+          isAboutPage
+            ? `
+        <a
+          id="scroll-to-top-logo"
+          href="index.html"
+          class="text-3xl md:text-4xl lg:text-5xl font-light tracking-tight text-black hover:opacity-60 transition-opacity duration-300"
+          title="Back to main page"
+        >
+          Photo Post-Realism Is Fun
+        </a>
+        `
+            : `
         <button
           id="scroll-to-top-logo"
           class="text-3xl md:text-4xl lg:text-5xl font-light tracking-tight text-black hover:opacity-60 transition-opacity duration-300"
@@ -397,15 +411,41 @@ function createHeader() {
         >
           Photo Post-Realism Is Fun
         </button>
+        `
+        }
+
+        <!-- Mobile About button (compact icon) -->
+        <a
+          href="${isAboutPage ? 'index.html' : 'about.html'}"
+          class="md:hidden inline-flex items-center justify-center ${isAboutPage ? 'h-8 px-2' : 'w-8 h-8'} rounded-md border border-gray-200 text-gray-600 hover:text-black hover:border-gray-400 transition-colors duration-300 font-light"
+          aria-label="${isAboutPage ? 'Back' : 'About'}"
+          title="${isAboutPage ? 'Back' : 'About'}"
+        >
+          <span class="leading-none text-sm tracking-wide">${isAboutPage ? 'Back' : 'A'}</span>
+        </a>
 
         <div class="hidden md:flex items-center gap-4 header-controls">
+          ${
+            isAboutPage
+              ? `
+          <!-- Desktop Back link (About page) -->
+          <a
+            href="index.html"
+            id="about-link"
+            class="flex items-center text-sm tracking-wider text-gray-700 hover:text-black transition-colors duration-300 font-light outline-none"
+            title="Back"
+          >
+            BACK
+          </a>
+          `
+              : `
           <!-- Scroll to top button -->
           <button
             id="scroll-up-btn"
             class="text-gray-400 hover:text-black transition-colors duration-300"
             title="Scroll to top"
           >
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <svg width="18" height="18" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M8 12V4M8 4L4 8M8 4L12 8" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
           </button>
@@ -416,42 +456,22 @@ function createHeader() {
             class="text-gray-400 hover:text-black transition-colors duration-300"
             title="Scroll to bottom"
           >
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <svg width="18" height="18" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M8 4V12M8 12L12 8M8 12L4 8" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
           </button>
 
-          <!-- Sort dropdown -->
-          <div class="relative" id="sort-dropdown">
-            <button
-              id="sort-trigger"
-              class="flex items-center gap-2 text-xs tracking-wider text-gray-500 hover:text-black transition-colors duration-300 font-light outline-none"
-            >
-              <span class="hidden sm:inline" id="sort-label">RECENT</span>
-              <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"></path>
-              </svg>
-            </button>
-
-            <!-- Dropdown menu -->
-            <div
-              id="sort-dropdown-content"
-              class="dropdown-content absolute right-0 top-full mt-2 bg-white border border-gray-100 shadow-xl min-w-[180px] z-50"
-            >
-              <button
-                class="sort-option w-full text-left text-xs tracking-wider font-light cursor-pointer py-3 px-4 hover:bg-gray-50 transition-colors"
-                data-value="newest"
-              >
-                Most recent on top
-              </button>
-              <button
-                class="sort-option w-full text-left text-xs tracking-wider font-light cursor-pointer py-3 px-4 hover:bg-gray-50 transition-colors"
-                data-value="oldest"
-              >
-                Oldest on top
-              </button>
-            </div>
-          </div>
+          <!-- Desktop About link (replaces sorter) -->
+          <a
+            href="about.html"
+            id="about-link"
+            class="flex items-center text-sm tracking-wider text-gray-500 hover:text-black transition-colors duration-300 font-light outline-none"
+            title="About"
+          >
+            ABOUT
+          </a>
+          `
+          }
         </div>
       </div>
     </div>
@@ -843,6 +863,16 @@ function initLayout() {
   // Create and insert header at the beginning
   const header = createHeader();
   body.insertBefore(header, body.firstChild);
+
+  // About page: remove section navigation UI entirely
+  if (window.location.pathname.includes('about.html')) {
+    const desktopNav = header.querySelector('.hidden.md\\:block');
+    if (desktopNav) desktopNav.remove();
+    const mobileBar = header.querySelector('#mobile-sections-bar');
+    if (mobileBar) mobileBar.remove();
+    const mobileContent = header.querySelector('#mobile-sections-content');
+    if (mobileContent) mobileContent.remove();
+  }
   
   // Remove desktop navigation from DOM on phones (cleaner than hiding)
   if (layoutState.isMobile) {
@@ -891,20 +921,24 @@ function initLayout() {
   });
 
   // Setup scroll buttons
-  document.getElementById('scroll-to-top-logo').addEventListener('click', (e) => {
-    e.preventDefault();
-    
-    // Clear hash from URL (e.g., example.com/#section → example.com/)
-    if (window.location.hash) {
-      // Build clean URL without hash (GitHub Pages compatible)
-      const url = new URL(window.location.href);
-      url.hash = '';
-      history.replaceState(null, document.title, url.toString());
-    }
-    
-    // Scroll to top
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  });
+  const isAboutPage = window.location.pathname.includes('about.html');
+  const logo = document.getElementById('scroll-to-top-logo');
+  if (logo && !isAboutPage) {
+    logo.addEventListener('click', (e) => {
+      e.preventDefault();
+      
+      // Clear hash from URL (e.g., example.com/#section → example.com/)
+      if (window.location.hash) {
+        // Build clean URL without hash (GitHub Pages compatible)
+        const url = new URL(window.location.href);
+        url.hash = '';
+        history.replaceState(null, document.title, url.toString());
+      }
+      
+      // Scroll to top
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+  }
 
   const scrollUpBtn = document.getElementById('scroll-up-btn');
   if (scrollUpBtn) {

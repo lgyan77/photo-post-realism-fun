@@ -1,0 +1,22 @@
+{
+  "comparison": {
+    "before": {
+      "full": "images/about/originals/OMD0285-before.JPG",
+      "thumb": "images/about/thumbs/OMD0285-before.JPG"
+    },
+    "after": {
+      "full": "images/about/originals/OMD0285-after.jpg",
+      "thumb": "images/about/thumbs/OMD0285-after.jpg"
+    }
+  },
+  "files": [
+    {
+      "full": "images/about/originals/OMD0285-after.jpg",
+      "thumb": "images/about/thumbs/OMD0285-after.jpg"
+    },
+    {
+      "full": "images/about/originals/OMD0285-before.JPG",
+      "thumb": "images/about/thumbs/OMD0285-before.JPG"
+    }
+  ]
+}
