@@ -11,7 +11,9 @@ let state = {
     photoIndex: 0
   },
   sections: [],
-  dataLoaded: false
+  dataLoaded: false,
+  siteCopyLoaded: false,
+  siteCopy: null
 };
 
 // Load photo data from JSON
@@ -29,6 +31,59 @@ async function loadPhotoData() {
     console.warn('Error loading photos.json, using demo data:', error);
     return null;
   }
+}
+
+async function loadSiteCopy() {
+  try {
+    const response = await fetch('content.json', { cache: 'no-cache' });
+    if (!response.ok) return null;
+    return await response.json();
+  } catch {
+    return null;
+  }
+}
+
+function createHomeIntro(text) {
+  const wrap = document.createElement('div');
+  // Align with section padding, keep it visually light.
+  // We also slightly reduce the first section top padding to avoid pushing content down.
+  wrap.className = 'px-8 md:px-16 lg:px-24 xl:px-32';
+  // Use padding (not margin) so it can't be collapsed/ignored.
+  // This ensures the spacing is added *under the intro* (not above it).
+  wrap.style.paddingBottom = '6pt';
+  wrap.innerHTML = `
+    <div class="border-l-2 border-gray-200 pl-4 md:pl-5 py-1">
+      <p class="text-gray-700 font-light italic text-sm md:text-[17px] leading-relaxed w-full">
+        ${text}
+      </p>
+    </div>
+  `;
+  return wrap;
+}
+
+function adjustIntroPositionWithoutMovingSections(introEl) {
+  if (!introEl) return;
+  const header = document.getElementById('main-header');
+  if (!header) return;
+
+  // Compute gap between header bottom and intro top.
+  const headerBottom = header.getBoundingClientRect().bottom;
+  const introRect = introEl.getBoundingClientRect();
+  const currentGap = introRect.top - headerBottom;
+
+  // Target a tight but readable gap (keeps intro close to nav).
+  const targetGap = 8; // px
+
+  const shiftUp = Math.max(0, Math.floor(currentGap - targetGap));
+  if (shiftUp <= 0) {
+    introEl.style.position = '';
+    introEl.style.top = '';
+    return;
+  }
+
+  // Move intro visually up without affecting layout flow (sections stay put).
+  introEl.style.position = 'relative';
+  introEl.style.top = `-${shiftUp}px`;
 }
 
 // Build metadata HTML only for fields that exist
@@ -218,7 +273,10 @@ function getSortedSections() {
 function createPhotoSection(section, onPhotoClick) {
   const sectionEl = document.createElement('section');
   sectionEl.id = section.id;
-  sectionEl.className = 'py-5 md:py-16 scroll-mt-44';
+  // Vertical spacing between collections:
+  // This padding controls the gap below thumbnails (pb-*) and above the next title (pt-* of next section).
+  // Keep mobile the same, reduce desktop to avoid overly large inter-collection gaps.
+  sectionEl.className = 'pt-5 pb-5 md:pt-10 md:pb-10 scroll-mt-44';
 
   // Container for padding
   const container = document.createElement('div');
@@ -231,7 +289,7 @@ function createPhotoSection(section, onPhotoClick) {
   header.style.transform = 'translateY(30px)';
   header.innerHTML = `
     <h2 class="text-2xl md:text-3xl lg:text-4xl font-light tracking-tight text-black mb-5">${section.title}</h2>
-    ${section.description ? `<p class="text-gray-500 font-light text-sm md:text-base max-w-2xl leading-relaxed">${section.description}</p>` : ''}
+    ${section.description ? `<p class="text-gray-500 font-light text-sm md:text-base w-full leading-relaxed">${section.description}</p>` : ''}
   `;
 
   // Animate header on scroll
@@ -1533,6 +1591,13 @@ async function renderHome() {
   const mainContainer = document.getElementById('main-content') || document.body;
   mainContainer.innerHTML = '';
 
+  // Load editable copy from content.json (intro + about page text)
+  if (!state.siteCopyLoaded) {
+    const copy = await loadSiteCopy();
+    state.siteCopy = copy;
+    state.siteCopyLoaded = true;
+  }
+
   // Load data from JSON or use demo data
   if (!state.dataLoaded) {
     const loadedSections = await loadPhotoData();
@@ -1552,11 +1617,31 @@ async function renderHome() {
     updateNavigation(state.sections.map(s => ({ id: s.id, label: s.title })));
   }
 
+  const introText = state.siteCopy?.homeIntroText;
+  let introEl = null;
+  if (typeof introText === 'string' && introText.trim()) {
+    introEl = createHomeIntro(introText.trim());
+    mainContainer.appendChild(introEl);
+  }
+
   // Render photo sections
-  state.sections.forEach(section => {
+  state.sections.forEach((section, idx) => {
     const sectionEl = createPhotoSection(section, (index) => openLightbox(section.id, index));
+    // Use the existing top whitespace above the first series for the intro line,
+    // so the first series doesn't get pushed further down.
+    if (idx === 0 && typeof introText === 'string' && introText.trim()) {
+      sectionEl.className = 'pt-0 pb-5 md:pt-0 md:pb-10 scroll-mt-44';
+    }
     mainContainer.appendChild(sectionEl);
   });
+
+  // After layout settles, lift the intro closer to the header/nav
+  // WITHOUT changing the section positions.
+  if (introEl) {
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => adjustIntroPositionWithoutMovingSections(introEl));
+    });
+  }
 }
 
 // Change sort order (can be called from UI)

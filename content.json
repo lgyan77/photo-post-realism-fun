@@ -1,4 +1,12 @@
 {
+  "homeIntroText": "Real places re‑imagined — crafted in the digital darkroom. Click an image to open, then swipe or use arrows to browse each series.",
+  "aboutPage": {
+    "subheading": "Bio",
+    "paragraphs": [
+      "My journey in photography began as a teenager, inspired by the photography magazines my father collected. In the final years of pre-digital photography, I joined a local club and was fortunate to have a few prints accepted at FIAP exhibitions—though never as a prize winner. Today, I find creative fulfilment (and fun!) in using post-processing to stretch and augment reality in landscape images to evoke impressions, rather than to document reality.",
+      "Here is an example of post-processing - before and after images"
+    ]
+  },
   "sections": [
     {
       "id": "zion-utah-usa",

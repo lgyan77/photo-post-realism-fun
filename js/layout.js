@@ -269,11 +269,11 @@ function applyHeaderStyles() {
     
     .mobile-sections-bar::before {
       left: 0;
-      right: calc(50% + 75px);
+      right: calc(50% + 85px);
     }
     
     .mobile-sections-bar::after {
-      left: calc(50% + 75px);
+      left: calc(50% + 85px);
       right: 0;
     }
     
@@ -288,7 +288,7 @@ function applyHeaderStyles() {
       left: 50%;
       top: 0;
       transform: translateX(-50%);
-      width: 150px;
+      width: 170px;
       height: 40px;
     }
     
@@ -311,7 +311,7 @@ function applyHeaderStyles() {
     
     .mobile-sections-text {
       position: absolute;
-      top: 38.46%;
+      top: calc(38.46% + 3px); /* ~2pt down so line doesn't touch text */
       left: 50%;
       transform: translate(-50%, -50%);
       z-index: 1;
@@ -417,11 +417,11 @@ function createHeader() {
         <!-- Mobile About button (compact icon) -->
         <a
           href="${isAboutPage ? 'index.html' : 'about.html'}"
-          class="md:hidden inline-flex items-center justify-center ${isAboutPage ? 'h-8 px-2' : 'w-8 h-8'} rounded-md border border-gray-200 text-gray-600 hover:text-black hover:border-gray-400 transition-colors duration-300 font-light"
+          class="md:hidden inline-flex items-center justify-center ${isAboutPage ? 'h-8 px-2' : 'w-8 h-8'} rounded-md border-2 border-black text-black hover:border-black transition-colors duration-300 font-medium"
           aria-label="${isAboutPage ? 'Back' : 'About'}"
           title="${isAboutPage ? 'Back' : 'About'}"
         >
-          <span class="leading-none text-sm tracking-wide">${isAboutPage ? 'Back' : 'A'}</span>
+          <span class="leading-none text-sm tracking-wide font-semibold">${isAboutPage ? 'Back' : 'A'}</span>
         </a>
 
         <div class="hidden md:flex items-center gap-4 header-controls">
@@ -488,12 +488,12 @@ function createHeader() {
       <svg class="mobile-sections-arrow" viewBox="0 0 150 40" preserveAspectRatio="none">
         <!-- Black line: dropped area with V (fixed 150px width total) -->
         <path class="mobile-sections-arrow-path" id="mobile-arrow-path" 
-              d="M 0,16 L 0,16 L 0,28 L 65,28 L 75,38 L 85,28 L 150,28 L 150,16 L 150,16" />
+              d="M 0,16 L 0,16 L 0,28 L 64,28 L 75,38 L 86,28 L 150,28 L 150,16 L 150,16" />
         <!-- Red accent: doubles the V -->
         <path class="mobile-sections-arrow-accent" id="mobile-arrow-accent" 
-              d="M 65,29 L 75,39 L 85,29" />
+              d="M 64,29 L 75,39 L 86,29" />
       </svg>
-      <span class="mobile-sections-text" id="mobile-sections-text">Sections</span>
+      <span class="mobile-sections-text" id="mobile-sections-text">Collections</span>
     </div>
     
     <!-- Mobile sections expandable content -->
@@ -586,13 +586,19 @@ function updateMobileSectionsPath() {
   
   if (!arrowPath || !arrowAccent) return;
   
+  // Widen the dropped notch around the label by 2px total (±1px on each side).
+  // Keep the same fixed 150px SVG coordinate system used elsewhere.
+  const NOTCH_LEFT_X = 64;  // was 65
+  const NOTCH_MID_X = 75;   // unchanged (center)
+  const NOTCH_RIGHT_X = 86; // was 85
+
   // Collapsed: Top line (y=16), drops to y=28 around text, downward V to y=38
-  const collapsedPath = 'M 0,16 L 0,16 L 0,28 L 65,28 L 75,38 L 85,28 L 150,28 L 150,16 L 150,16';
-  const collapsedAccent = 'M 65,29 L 75,39 L 85,29';
+  const collapsedPath = `M 0,16 L 0,16 L 0,28 L ${NOTCH_LEFT_X},28 L ${NOTCH_MID_X},38 L ${NOTCH_RIGHT_X},28 L 150,28 L 150,16 L 150,16`;
+  const collapsedAccent = `M ${NOTCH_LEFT_X},29 L ${NOTCH_MID_X},39 L ${NOTCH_RIGHT_X},29`;
   
   // Expanded: Everything at y=28, upward V to y=18 (drop disappears, V flips)
-  const expandedPath = 'M 0,28 L 0,28 L 0,28 L 65,28 L 75,18 L 85,28 L 150,28 L 150,28 L 150,28';
-  const expandedAccent = 'M 65,27 L 75,17 L 85,27';
+  const expandedPath = `M 0,28 L 0,28 L 0,28 L ${NOTCH_LEFT_X},28 L ${NOTCH_MID_X},18 L ${NOTCH_RIGHT_X},28 L 150,28 L 150,28 L 150,28`;
+  const expandedAccent = `M ${NOTCH_LEFT_X},27 L ${NOTCH_MID_X},17 L ${NOTCH_RIGHT_X},27`;
   
   // Store paths
   const bar = document.getElementById('mobile-sections-bar');
@@ -699,7 +705,7 @@ function closeMobileSectionsMenu() {
       arrowAccent.setAttribute('d', topBar.dataset.collapsedAccent);
     }
     
-    // Show "Sections" text after morph starts
+    // Show label text after morph starts
     setTimeout(() => {
       if (sectionsText) {
         sectionsText.style.opacity = '1';

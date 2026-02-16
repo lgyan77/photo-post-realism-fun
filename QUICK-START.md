@@ -19,6 +19,14 @@ images/originals/
 Edit `content.json` with your section names:
 ```json
 {
+  "homeIntroText": "Real places re‑imagined — crafted in the digital darkroom. Click an image to open, then swipe or use arrows to browse each series.",
+  "aboutPage": {
+    "subheading": "Bio",
+    "paragraphs": [
+      "Your first About paragraph...",
+      "Your second About paragraph..."
+    ]
+  },
   "sections": [
     {
       "id": "urban-nights",
@@ -29,6 +37,11 @@ Edit `content.json` with your section names:
   ]
 }
 ```
+
+### Editable site text (no rebuild needed)
+
+- **Homepage intro line**: edit `content.json` → `homeIntroText`
+- **About page text**: edit `content.json` → `aboutPage.subheading` and `aboutPage.paragraphs`
 
 ## 3️⃣ Build & Preview
 

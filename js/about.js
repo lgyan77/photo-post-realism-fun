@@ -42,9 +42,58 @@ function buildComparisonHTML(before, after) {
   `;
 }
 
+function escapeHtml(text) {
+  return String(text)
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#039;');
+}
+
+async function loadSiteCopy() {
+  try {
+    const res = await fetch('content.json', { cache: 'no-cache' });
+    if (!res.ok) return null;
+    return await res.json();
+  } catch {
+    return null;
+  }
+}
+
+function renderAboutText(copy) {
+  const wrap = document.getElementById('about-text');
+  if (!wrap) return;
+
+  const subheadingEl = document.getElementById('about-subheading');
+  const subheading = copy?.aboutPage?.subheading;
+  if (subheadingEl && typeof subheading === 'string' && subheading.trim()) {
+    subheadingEl.textContent = subheading.trim();
+  }
+
+  const paras = copy?.aboutPage?.paragraphs;
+  if (Array.isArray(paras) && paras.length > 0) {
+    const html = paras
+      .filter(p => typeof p === 'string' && p.trim())
+      .map((p, idx) => `
+        <p class="text-gray-500 font-light text-sm md:text-base w-full leading-relaxed ${idx > 0 ? 'mt-6' : ''}">
+          ${escapeHtml(p.trim())}
+        </p>
+      `).join('');
+
+    // Keep existing h2, replace only paragraphs
+    [...wrap.querySelectorAll('p')].forEach(p => p.remove());
+    wrap.insertAdjacentHTML('beforeend', html);
+  }
+}
+
 async function initAbout() {
   const mount = document.getElementById('about-comparison');
   if (!mount) return;
+
+  // Editable text from content.json (no rebuild needed)
+  const copy = await loadSiteCopy();
+  if (copy) renderAboutText(copy);
 
   try {
     const res = await fetch('data/about.json', { cache: 'no-cache' });
@@ -62,8 +111,8 @@ async function initAbout() {
     // Graceful placeholder: page works even before images are uploaded
     mount.innerHTML = `
       <div class="max-w-3xl">
-        <p class="text-gray-900 font-light text-sm md:text-base leading-relaxed">
-          Upload two full-size images to <code class="text-gray-900">images/about/originals/</code> and run <code class="text-gray-900">npm run build</code> to generate thumbnails for this section.
+        <p class="text-gray-600 font-light text-sm md:text-base leading-relaxed">
+          Upload two full-size images to <code class="text-gray-700">images/about/originals/</code> and run <code class="text-gray-700">npm run build</code> to generate thumbnails for this section.
         </p>
       </div>
     `;
