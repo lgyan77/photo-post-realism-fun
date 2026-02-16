@@ -417,11 +417,20 @@ function createHeader() {
         <!-- Mobile About button (compact icon) -->
         <a
           href="${isAboutPage ? 'index.html' : 'about.html'}"
-          class="md:hidden inline-flex items-center justify-center ${isAboutPage ? 'h-8 px-2' : 'w-8 h-8'} rounded-md border-2 border-black text-black hover:border-black transition-colors duration-300 font-medium"
+          class="md:hidden inline-flex items-center justify-center w-8 h-8 rounded-md border-2 border-black text-black hover:border-black transition-colors duration-300 font-medium"
           aria-label="${isAboutPage ? 'Back' : 'About'}"
           title="${isAboutPage ? 'Back' : 'About'}"
         >
-          <span class="leading-none text-sm tracking-wide font-semibold">${isAboutPage ? 'Back' : 'A'}</span>
+          ${
+            isAboutPage
+              ? `
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M9 14l-4-4 4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M5 10h8a6 6 0 0 1 6 6v2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+              `
+              : `<span class="leading-none text-sm tracking-wide font-semibold">A</span>`
+          }
         </a>
 
         <div class="hidden md:flex items-center gap-4 header-controls">
@@ -432,10 +441,14 @@ function createHeader() {
           <a
             href="index.html"
             id="about-link"
-            class="flex items-center text-sm tracking-wider text-gray-700 hover:text-black transition-colors duration-300 font-light outline-none"
+            class="flex items-center text-gray-600 hover:text-black transition-colors duration-300 outline-none"
             title="Back"
+            aria-label="Back"
           >
-            BACK
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M9 14l-4-4 4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M5 10h8a6 6 0 0 1 6 6v2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
           </a>
           `
               : `
