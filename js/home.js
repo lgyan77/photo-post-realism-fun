@@ -50,7 +50,7 @@ function createHomeIntro(text) {
   wrap.className = 'px-8 md:px-16 lg:px-24 xl:px-32';
   // Use padding (not margin) so it can't be collapsed/ignored.
   // This ensures the spacing is added *under the intro* (not above it).
-  wrap.style.paddingBottom = '6pt';
+  wrap.style.paddingBottom = '22pt'; // +8pt vs previous
   wrap.innerHTML = `
     <div class="border-l-2 border-gray-200 pl-4 md:pl-5 py-1">
       <p class="text-gray-700 font-light italic text-sm md:text-[17px] leading-relaxed w-full">
