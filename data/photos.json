@@ -192,6 +192,76 @@
       ]
     },
     {
+      "id": "escalante-utah-usa",
+      "title": "Escalante Utah USA",
+      "description": "Red Hot Earth of Cosmic Ashtray and pop art fun from a slot canyon.",
+      "photos": [
+        {
+          "id": "escalante-utah-usa-1",
+          "url": "images/web/escalante/OMD0477-dehazed.jpg",
+          "mobileUrl": "images/mobile/escalante/OMD0477-dehazed.jpg",
+          "thumb": "images/thumbs/escalante/OMD0477-dehazed.jpg",
+          "width": 2560,
+          "height": 1807,
+          "date": "2025-09-30T08:36:42.000Z",
+          "camera": "OLYMPUS CORPORATION E-M10MarkIV",
+          "iso": "ISO 200",
+          "shutterSpeed": "1/200s"
+        },
+        {
+          "id": "escalante-utah-usa-2",
+          "url": "images/web/escalante/OMD0486-3.jpg",
+          "mobileUrl": "images/mobile/escalante/OMD0486-3.jpg",
+          "thumb": "images/thumbs/escalante/OMD0486-3.jpg",
+          "width": 2560,
+          "height": 1553,
+          "date": "2025-09-30T09:02:57.000Z",
+          "camera": "OLYMPUS CORPORATION E-M10MarkIV",
+          "lens": "OLYMPUS M.12-40mm F2.8",
+          "focalLength": "12mm",
+          "aperture": "f/9.0",
+          "iso": "ISO 200",
+          "shutterSpeed": "1/80s"
+        },
+        {
+          "id": "escalante-utah-usa-3",
+          "url": "images/web/escalante/OMD0507-3-2.jpg",
+          "mobileUrl": "images/mobile/escalante/OMD0507-3-2.jpg",
+          "thumb": "images/thumbs/escalante/OMD0507-3-2.jpg",
+          "width": 1846,
+          "height": 2560,
+          "date": "2025-09-30T15:05:38.000Z",
+          "camera": "OLYMPUS CORPORATION E-M10MarkIV",
+          "iso": "ISO 200",
+          "shutterSpeed": "1/4s"
+        },
+        {
+          "id": "escalante-utah-usa-4",
+          "url": "images/web/escalante/OMD0507-3-3.jpg",
+          "mobileUrl": "images/mobile/escalante/OMD0507-3-3.jpg",
+          "thumb": "images/thumbs/escalante/OMD0507-3-3.jpg",
+          "width": 1846,
+          "height": 2560,
+          "date": "2025-09-30T15:05:38.000Z",
+          "camera": "OLYMPUS CORPORATION E-M10MarkIV",
+          "iso": "ISO 200",
+          "shutterSpeed": "1/4s"
+        },
+        {
+          "id": "escalante-utah-usa-5",
+          "url": "images/web/escalante/OMD0507-3-4.jpg",
+          "mobileUrl": "images/mobile/escalante/OMD0507-3-4.jpg",
+          "thumb": "images/thumbs/escalante/OMD0507-3-4.jpg",
+          "width": 1846,
+          "height": 2560,
+          "date": "2025-09-30T15:05:38.000Z",
+          "camera": "OLYMPUS CORPORATION E-M10MarkIV",
+          "iso": "ISO 200",
+          "shutterSpeed": "1/4s"
+        }
+      ]
+    },
+    {
       "id": "st-anton-tyrol-austria",
       "title": "St Anton Tyrol Austria",
       "description": "Shades of white on the slopes of Tyrol.",
