@@ -258,6 +258,30 @@
           "camera": "OLYMPUS CORPORATION E-M10MarkIV",
           "iso": "ISO 200",
           "shutterSpeed": "1/4s"
+        },
+        {
+          "id": "escalante-utah-usa-6",
+          "url": "images/web/escalante/OMD0507-blue.jpg",
+          "mobileUrl": "images/mobile/escalante/OMD0507-blue.jpg",
+          "thumb": "images/thumbs/escalante/OMD0507-blue.jpg",
+          "width": 2560,
+          "height": 1759,
+          "date": "2025-09-30T15:05:38.000Z",
+          "camera": "OLYMPUS CORPORATION E-M10MarkIV",
+          "iso": "ISO 200",
+          "shutterSpeed": "1/4s"
+        },
+        {
+          "id": "escalante-utah-usa-7",
+          "url": "images/web/escalante/OMD0507-green.jpg",
+          "mobileUrl": "images/mobile/escalante/OMD0507-green.jpg",
+          "thumb": "images/thumbs/escalante/OMD0507-green.jpg",
+          "width": 2560,
+          "height": 1771,
+          "date": "2025-09-30T15:05:38.000Z",
+          "camera": "OLYMPUS CORPORATION E-M10MarkIV",
+          "iso": "ISO 200",
+          "shutterSpeed": "1/4s"
         }
       ]
     },
