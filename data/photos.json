@@ -121,6 +121,21 @@
         },
         {
           "id": "zion-utah-usa-12",
+          "url": "images/web/zion-utah-usa/OMD0277-3-3.jpg",
+          "mobileUrl": "images/mobile/zion-utah-usa/OMD0277-3-3.jpg",
+          "thumb": "images/thumbs/zion-utah-usa/OMD0277-3-3.jpg",
+          "width": 2560,
+          "height": 1920,
+          "date": "2025-09-28T09:21:34.000Z",
+          "camera": "OLYMPUS CORPORATION E-M10MarkIV",
+          "lens": "OLYMPUS M.12-40mm F2.8",
+          "focalLength": "40mm",
+          "aperture": "f/2.8",
+          "iso": "ISO 400",
+          "shutterSpeed": "1/500s"
+        },
+        {
+          "id": "zion-utah-usa-13",
           "url": "images/web/zion-utah-usa/OMD0285-2-2.jpg",
           "mobileUrl": "images/mobile/zion-utah-usa/OMD0285-2-2.jpg",
           "thumb": "images/thumbs/zion-utah-usa/OMD0285-2-2.jpg",
@@ -225,6 +240,21 @@
         },
         {
           "id": "escalante-utah-usa-3",
+          "url": "images/web/escalante/OMD0488-3.jpg",
+          "mobileUrl": "images/mobile/escalante/OMD0488-3.jpg",
+          "thumb": "images/thumbs/escalante/OMD0488-3.jpg",
+          "width": 2560,
+          "height": 1574,
+          "date": "2025-09-30T09:15:41.000Z",
+          "camera": "OLYMPUS CORPORATION E-M10MarkIV",
+          "lens": "OLYMPUS M.12-40mm F2.8",
+          "focalLength": "12mm",
+          "aperture": "f/9.0",
+          "iso": "ISO 200",
+          "shutterSpeed": "1/125s"
+        },
+        {
+          "id": "escalante-utah-usa-4",
           "url": "images/web/escalante/OMD0507-3-2.jpg",
           "mobileUrl": "images/mobile/escalante/OMD0507-3-2.jpg",
           "thumb": "images/thumbs/escalante/OMD0507-3-2.jpg",
@@ -236,7 +266,7 @@
           "shutterSpeed": "1/4s"
         },
         {
-          "id": "escalante-utah-usa-4",
+          "id": "escalante-utah-usa-5",
           "url": "images/web/escalante/OMD0507-3-3.jpg",
           "mobileUrl": "images/mobile/escalante/OMD0507-3-3.jpg",
           "thumb": "images/thumbs/escalante/OMD0507-3-3.jpg",
@@ -248,7 +278,7 @@
           "shutterSpeed": "1/4s"
         },
         {
-          "id": "escalante-utah-usa-5",
+          "id": "escalante-utah-usa-6",
           "url": "images/web/escalante/OMD0507-3-4.jpg",
           "mobileUrl": "images/mobile/escalante/OMD0507-3-4.jpg",
           "thumb": "images/thumbs/escalante/OMD0507-3-4.jpg",
@@ -260,7 +290,7 @@
           "shutterSpeed": "1/4s"
         },
         {
-          "id": "escalante-utah-usa-6",
+          "id": "escalante-utah-usa-7",
           "url": "images/web/escalante/OMD0507-blue.jpg",
           "mobileUrl": "images/mobile/escalante/OMD0507-blue.jpg",
           "thumb": "images/thumbs/escalante/OMD0507-blue.jpg",
@@ -272,7 +302,7 @@
           "shutterSpeed": "1/4s"
         },
         {
-          "id": "escalante-utah-usa-7",
+          "id": "escalante-utah-usa-8",
           "url": "images/web/escalante/OMD0507-green.jpg",
           "mobileUrl": "images/mobile/escalante/OMD0507-green.jpg",
           "thumb": "images/thumbs/escalante/OMD0507-green.jpg",
@@ -282,6 +312,20 @@
           "camera": "OLYMPUS CORPORATION E-M10MarkIV",
           "iso": "ISO 200",
           "shutterSpeed": "1/4s"
+        },
+        {
+          "id": "escalante-utah-usa-9",
+          "url": "images/web/escalante/P_log-in-the-slot.jpg",
+          "mobileUrl": "images/mobile/escalante/P_log-in-the-slot.jpg",
+          "thumb": "images/thumbs/escalante/P_log-in-the-slot.jpg",
+          "width": 1920,
+          "height": 2560,
+          "date": "2025-09-30T15:49:10.000Z",
+          "camera": "motorola edge 20",
+          "focalLength": "7mm",
+          "aperture": "f/2.4",
+          "iso": "ISO 174",
+          "shutterSpeed": "1/40s"
         }
       ]
     },
