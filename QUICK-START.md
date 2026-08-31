@@ -50,6 +50,9 @@ npm run build    # Generate thumbnails & extract metadata
 npm run serve    # View at http://localhost:8000
 ```
 
+
+Open http://localhost:8000 in your browser.
+
 ---
 
 ## What Gets Automated ✨

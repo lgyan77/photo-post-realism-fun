@@ -345,6 +345,43 @@
       ]
     },
     {
+      "id": "florence-pisa-italy",
+      "title": "Florence Pisa Italy",
+      "description": "A few colour-bended impressions of the Renaissance in Florence and Pisa.",
+      "photos": [
+        {
+          "id": "florence-pisa-italy-1",
+          "url": "images/web/florence-pisa/Pisa.jpg",
+          "mobileUrl": "images/mobile/florence-pisa/Pisa.jpg",
+          "thumb": "images/thumbs/florence-pisa/Pisa.jpg",
+          "width": 2560,
+          "height": 2394,
+          "date": "2026-06-01T05:46:52.000Z",
+          "camera": "OLYMPUS CORPORATION E-M10MarkIV",
+          "lens": "OLYMPUS M.12-40mm F2.8",
+          "focalLength": "12mm",
+          "aperture": "f/9.0",
+          "iso": "ISO 800",
+          "shutterSpeed": "1/640s"
+        },
+        {
+          "id": "florence-pisa-italy-2",
+          "url": "images/web/florence-pisa/ponte-vecchio.jpg",
+          "mobileUrl": "images/mobile/florence-pisa/ponte-vecchio.jpg",
+          "thumb": "images/thumbs/florence-pisa/ponte-vecchio.jpg",
+          "width": 2560,
+          "height": 1931,
+          "date": "2026-05-30T19:33:15.000Z",
+          "camera": "OLYMPUS CORPORATION E-M10MarkIV",
+          "lens": "OLYMPUS M.12-40mm F2.8",
+          "focalLength": "40mm",
+          "aperture": "f/4.5",
+          "iso": "ISO 200",
+          "shutterSpeed": "1/500s"
+        }
+      ]
+    },
+    {
       "id": "st-anton-tyrol-austria",
       "title": "St Anton Tyrol Austria",
       "description": "Shades of white on the slopes of Tyrol.",

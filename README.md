@@ -31,8 +31,10 @@ npm run build
 
 # 5. Preview
 npm run serve
-# Open http://localhost:8000
+
 ```
+Open http://localhost:8000
+
 
 See [QUICK-START.md](QUICK-START.md) for step-by-step instructions.
 
