@@ -182,21 +182,6 @@
         },
         {
           "id": "bryce-canyon-uta-usa-2",
-          "url": "images/web/bryce-canyon/Bryce-landscape-wide.jpg",
-          "mobileUrl": "images/mobile/bryce-canyon/Bryce-landscape-wide.jpg",
-          "thumb": "images/thumbs/bryce-canyon/Bryce-landscape-wide.jpg",
-          "width": 2560,
-          "height": 1500,
-          "date": "2025-09-29T11:58:58.000Z",
-          "camera": "OLYMPUS CORPORATION E-M10MarkIV",
-          "lens": "OLYMPUS M.12-40mm F2.8",
-          "focalLength": "17mm",
-          "aperture": "f/10.0",
-          "iso": "ISO 200",
-          "shutterSpeed": "1/160s"
-        },
-        {
-          "id": "bryce-canyon-uta-usa-3",
           "url": "images/web/bryce-canyon/OMD0398-3.jpg",
           "mobileUrl": "images/mobile/bryce-canyon/OMD0398-3.jpg",
           "thumb": "images/thumbs/bryce-canyon/OMD0398-3.jpg",
@@ -208,7 +193,7 @@
           "shutterSpeed": "1/50s"
         },
         {
-          "id": "bryce-canyon-uta-usa-4",
+          "id": "bryce-canyon-uta-usa-3",
           "url": "images/web/bryce-canyon/OMD09391-3.jpg",
           "mobileUrl": "images/mobile/bryce-canyon/OMD09391-3.jpg",
           "thumb": "images/thumbs/bryce-canyon/OMD09391-3.jpg",
@@ -218,6 +203,21 @@
           "camera": "OLYMPUS CORPORATION E-M10MarkIV",
           "iso": "ISO 200",
           "shutterSpeed": "1/30s"
+        },
+        {
+          "id": "bryce-canyon-uta-usa-4",
+          "url": "images/web/bryce-canyon/P-Bryce-landscape-wide.jpg",
+          "mobileUrl": "images/mobile/bryce-canyon/P-Bryce-landscape-wide.jpg",
+          "thumb": "images/thumbs/bryce-canyon/P-Bryce-landscape-wide.jpg",
+          "width": 2560,
+          "height": 1500,
+          "date": "2025-09-29T11:58:58.000Z",
+          "camera": "OLYMPUS CORPORATION E-M10MarkIV",
+          "lens": "OLYMPUS M.12-40mm F2.8",
+          "focalLength": "17mm",
+          "aperture": "f/10.0",
+          "iso": "ISO 200",
+          "shutterSpeed": "1/160s"
         }
       ]
     },
@@ -228,6 +228,21 @@
       "photos": [
         {
           "id": "escalante-utah-usa-1",
+          "url": "images/web/escalante/1.on-way-to-ashtray-escalante.jpg",
+          "mobileUrl": "images/mobile/escalante/1.on-way-to-ashtray-escalante.jpg",
+          "thumb": "images/thumbs/escalante/1.on-way-to-ashtray-escalante.jpg",
+          "width": 2560,
+          "height": 1574,
+          "date": "2025-09-30T09:15:41.000Z",
+          "camera": "OLYMPUS CORPORATION E-M10MarkIV",
+          "lens": "OLYMPUS M.12-40mm F2.8",
+          "focalLength": "12mm",
+          "aperture": "f/9.0",
+          "iso": "ISO 200",
+          "shutterSpeed": "1/125s"
+        },
+        {
+          "id": "escalante-utah-usa-2",
           "url": "images/web/escalante/OMD0477-dehazed.jpg",
           "mobileUrl": "images/mobile/escalante/OMD0477-dehazed.jpg",
           "thumb": "images/thumbs/escalante/OMD0477-dehazed.jpg",
@@ -239,7 +254,7 @@
           "shutterSpeed": "1/200s"
         },
         {
-          "id": "escalante-utah-usa-2",
+          "id": "escalante-utah-usa-3",
           "url": "images/web/escalante/OMD0486-3.jpg",
           "mobileUrl": "images/mobile/escalante/OMD0486-3.jpg",
           "thumb": "images/thumbs/escalante/OMD0486-3.jpg",
@@ -254,7 +269,7 @@
           "shutterSpeed": "1/80s"
         },
         {
-          "id": "escalante-utah-usa-3",
+          "id": "escalante-utah-usa-4",
           "url": "images/web/escalante/OMD0507-3-2.jpg",
           "mobileUrl": "images/mobile/escalante/OMD0507-3-2.jpg",
           "thumb": "images/thumbs/escalante/OMD0507-3-2.jpg",
@@ -266,7 +281,7 @@
           "shutterSpeed": "1/4s"
         },
         {
-          "id": "escalante-utah-usa-4",
+          "id": "escalante-utah-usa-5",
           "url": "images/web/escalante/OMD0507-3-3.jpg",
           "mobileUrl": "images/mobile/escalante/OMD0507-3-3.jpg",
           "thumb": "images/thumbs/escalante/OMD0507-3-3.jpg",
@@ -278,7 +293,7 @@
           "shutterSpeed": "1/4s"
         },
         {
-          "id": "escalante-utah-usa-5",
+          "id": "escalante-utah-usa-6",
           "url": "images/web/escalante/OMD0507-3-4.jpg",
           "mobileUrl": "images/mobile/escalante/OMD0507-3-4.jpg",
           "thumb": "images/thumbs/escalante/OMD0507-3-4.jpg",
@@ -290,7 +305,7 @@
           "shutterSpeed": "1/4s"
         },
         {
-          "id": "escalante-utah-usa-6",
+          "id": "escalante-utah-usa-7",
           "url": "images/web/escalante/OMD0507-blue.jpg",
           "mobileUrl": "images/mobile/escalante/OMD0507-blue.jpg",
           "thumb": "images/thumbs/escalante/OMD0507-blue.jpg",
@@ -302,7 +317,7 @@
           "shutterSpeed": "1/4s"
         },
         {
-          "id": "escalante-utah-usa-7",
+          "id": "escalante-utah-usa-8",
           "url": "images/web/escalante/OMD0507-green.jpg",
           "mobileUrl": "images/mobile/escalante/OMD0507-green.jpg",
           "thumb": "images/thumbs/escalante/OMD0507-green.jpg",
@@ -314,7 +329,7 @@
           "shutterSpeed": "1/4s"
         },
         {
-          "id": "escalante-utah-usa-8",
+          "id": "escalante-utah-usa-9",
           "url": "images/web/escalante/P_log-in-the-slot.jpg",
           "mobileUrl": "images/mobile/escalante/P_log-in-the-slot.jpg",
           "thumb": "images/thumbs/escalante/P_log-in-the-slot.jpg",
@@ -326,21 +341,6 @@
           "aperture": "f/2.4",
           "iso": "ISO 174",
           "shutterSpeed": "1/40s"
-        },
-        {
-          "id": "escalante-utah-usa-9",
-          "url": "images/web/escalante/on-way-to-ashtray-escalante.jpg",
-          "mobileUrl": "images/mobile/escalante/on-way-to-ashtray-escalante.jpg",
-          "thumb": "images/thumbs/escalante/on-way-to-ashtray-escalante.jpg",
-          "width": 2560,
-          "height": 1574,
-          "date": "2025-09-30T09:15:41.000Z",
-          "camera": "OLYMPUS CORPORATION E-M10MarkIV",
-          "lens": "OLYMPUS M.12-40mm F2.8",
-          "focalLength": "12mm",
-          "aperture": "f/9.0",
-          "iso": "ISO 200",
-          "shutterSpeed": "1/125s"
         }
       ]
     },
